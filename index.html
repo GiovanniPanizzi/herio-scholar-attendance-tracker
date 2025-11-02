@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Registrazione Presenze</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+</head>
+<body>
+<h1>Presenze Aula</h1>
+
+<div id="qrcode"></div>
+<p>Scannerizza il QR o invia i tuoi dati:</p>
+
+<label>Matricola: <input id="matricola"></label><br>
+<label>Email: <input id="email"></label><br>
+<button id="send">Invia presenza</button>
+<p id="status"></p>
+
+<script>
+const ws = new WebSocket('ws://TUO_SERVER:8080'); // Cambia TUO_SERVER con IP o dominio
+
+ws.onmessage = e => {
+  const data = JSON.parse(e.data);
+  document.getElementById('status').innerText = data.msg;
+};
+
+// Funzione per aggiornare QR dinamico
+async function aggiornaQR() {
+  try {
+    const token = await fetch('http://TUO_SERVER:3000/token').then(r=>r.text());
+    const url = `http://TUO_SERVER:3000/?token=${token}`;
+    const canvas = document.getElementById('qrcode');
+    canvas.innerHTML = '';
+    QRCode.toCanvas(canvas, url, function (error) {
+      if (error) console.error(error);
+    });
+  } catch(err) {
+    console.error("Errore aggiornamento QR:", err);
+  }
+}
+
+// Aggiorna QR ogni 10 secondi
+aggiornaQR();
+setInterval(aggiornaQR, 10000);
+
+// Invio presenza
+document.getElementById('send').onclick = async () => {
+  const matricola = document.getElementById('matricola').value.trim();
+  const email = document.getElementById('email').value.trim();
+  if(!matricola || !email) {
+    document.getElementById('status').innerText = "Compila matricola e email";
+    return;
+  }
+
+  // Recupera token corrente
+  const token = await fetch('http://TUO_SERVER:3000/token').then(r=>r.text());
+  
+  ws.send(JSON.stringify({ matricola, email, token }));
+};
+</script>
+</body>
+</html>
