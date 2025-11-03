@@ -1,91 +1,132 @@
-const WebSocket = require('ws');
-const sqlite3 = require('sqlite3').verbose();
-const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
+const crypto = require('crypto');
 const fs = require('fs');
+const path = require('path');
 
-const PORT_WS = 8080;
-const PORT_HTTP = 3000;
+const PORT = 3000;
+const DB_PATH = path.join(__dirname, 'presenze.db');
+const TOKEN_LIFETIME = 15000; // 15 secondi
+
+// --- ELIMINA DB VECCHIO SE PRESENTE ---
+if (fs.existsSync(DB_PATH)) {
+  fs.unlinkSync(DB_PATH);
+  console.log("DB esistente eliminato.");
+}
 
 // --- DATABASE ---
-const db = new sqlite3.Database('./presenze.db');
-db.serialize(() => {
-  db.run("CREATE TABLE IF NOT EXISTS presenze (matricola TEXT PRIMARY KEY, email TEXT, timestamp INTEGER)");
-  db.run("CREATE TABLE IF NOT EXISTS token (value TEXT, expires INTEGER)");
+const db = new sqlite3.Database(DB_PATH, err => {
+  if (err) {
+    console.error("Errore apertura DB:", err);
+    process.exit(1);
+  }
 });
 
-// --- GENERA TOKEN ---
+// Creazione tabelle
+db.serialize(() => {
+  db.run(`CREATE TABLE presenze (
+    matricola TEXT PRIMARY KEY,
+    email TEXT,
+    ip TEXT UNIQUE,
+    timestamp INTEGER
+  )`);
+
+  db.run(`CREATE TABLE token (
+    value TEXT PRIMARY KEY,
+    expires INTEGER
+  )`);
+});
+
+// --- TOKEN ---
 function generateToken() {
-  const token = crypto.randomBytes(3).toString('hex'); // es: 6 caratteri
-  const expires = Date.now() + 10000; // 10 secondi
-  db.run("DELETE FROM token");
-  db.run("INSERT INTO token(value, expires) VALUES(?,?)", [token, expires]);
+  const token = crypto.randomBytes(3).toString('hex'); // 6 caratteri
+  const expires = Date.now() + TOKEN_LIFETIME;
+
+  db.run("INSERT OR REPLACE INTO token(value, expires) VALUES(?,?)", [token, expires], err => {
+    if (err) console.error("Errore inserimento token:", err);
+  });
+
+  console.log("Nuovo token:", token);
   return token;
 }
 
-// Primo token subito
+// Primo token e aggiornamento automatico
 generateToken();
+setInterval(generateToken, TOKEN_LIFETIME);
 
-// Aggiorna token ogni 10 secondi
-setInterval(() => {
-  const token = generateToken();
-  console.log("Nuovo token:", token);
-}, 10000);
-
-// --- SERVER HTTP (opzionale) ---
+// --- SERVER ---
 const app = express();
 app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Endpoint per recuperare token via fetch (frontend)
-app.get('/token', (req,res) => {
-  db.get("SELECT * FROM token WHERE expires>?", [Date.now()], (err,row) => {
-    if(row) res.send(row.value);
-    else res.status(404).send("Nessun token valido");
-  });
-});
+// --- API registrazione ---
+app.post('/registra', (req, res) => {
+  const { matricola, email, token } = req.body;
+  if (!matricola || !email || !token)
+    return res.status(400).json({ status: "error", msg: "Campi mancanti" });
 
-// Endpoint per esportare presenze in CSV
-app.get('/export', (req,res)=>{
-  db.all("SELECT * FROM presenze", [], (err, rows)=>{
-    if(err) return res.status(500).send("Errore DB");
-    const csv = rows.map(r=>`${r.matricola},${r.email},${new Date(r.timestamp).toISOString()}`).join('\n');
-    fs.writeFileSync('presenze.csv', csv);
-    res.download('presenze.csv');
-  });
-});
+  const ip = (req.ip || req.connection.remoteAddress).replace(/^::ffff:/, '');
 
-app.listen(PORT_HTTP, () => console.log(`Server HTTP in ascolto su http://localhost:${PORT_HTTP}`));
-
-// --- SERVER WEBSOCKET ---
-const wss = new WebSocket.Server({ port: PORT_WS });
-wss.on('connection', ws => {
-  ws.on('message', msg => {
-    try {
-      const data = JSON.parse(msg);
-      const { matricola, email, token } = data;
-
-      if(!matricola || !email || !token)
-        return ws.send(JSON.stringify({status:"error", msg:"Campi mancanti"}));
-
-      // Controlla token valido
-      db.get("SELECT * FROM token WHERE value=? AND expires>?", [token, Date.now()], (err, row) => {
-        if (!row) return ws.send(JSON.stringify({ status: "error", msg: "Token scaduto" }));
-
-        // Controlla duplicati
-        db.get("SELECT * FROM presenze WHERE matricola=?", [matricola], (err, existing) => {
-          if (existing) return ws.send(JSON.stringify({ status: "error", msg: "Presenza già registrata" }));
-
-          // Inserisci nel DB
-          db.run("INSERT INTO presenze(matricola,email,timestamp) VALUES(?,?,?)", [matricola,email,Date.now()]);
-          ws.send(JSON.stringify({ status: "ok", msg: "Presenza registrata" }));
-        });
-      });
-
-    } catch(e) {
-      ws.send(JSON.stringify({ status: "error", msg: "Formato messaggio errato" }));
+  // Controlla token valido
+  db.get("SELECT * FROM token WHERE value=? AND expires>?", [token, Date.now()], (err, row) => {
+    if (err) {
+      console.error("Errore DB token:", err);
+      return res.status(500).json({ status: "error", msg: "Errore server" });
     }
+
+    if (!row)
+      return res.status(403).json({ status: "error", msg: "Token non valido o scaduto" });
+
+    // Controlla se IP già registrato
+    db.get("SELECT * FROM presenze WHERE ip=?", [ip], (err, existing) => {
+      if (err) {
+        console.error("Errore DB presenze:", err);
+        return res.status(500).json({ status: "error", msg: "Errore server" });
+      }
+
+      if (!existing) {
+        db.run(
+          "INSERT INTO presenze(matricola,email,ip,timestamp) VALUES(?,?,?,?)",
+          [matricola, email, ip, Date.now()],
+          err => {
+            if (err) console.error("Errore inserimento presenza:", err);
+            else console.log(`Registrata: ${matricola} (${ip})`);
+          }
+        );
+      } else {
+        console.log(`IP già registrato: ${ip}, matricola ${matricola} non salvata`);
+      }
+
+      // Feedback positivo sempre
+      res.json({ status: "ok", msg: "Presenza registrata" });
+    });
   });
 });
 
-console.log("Server WebSocket in ascolto su ws://localhost:"+PORT_WS);
+// --- Endpoint debug ---
+app.get('/presenze', (req, res) => {
+  db.all("SELECT * FROM presenze", [], (err, rows) => {
+    if (err) return res.status(500).json({ error: "Errore DB" });
+    res.json(rows);
+  });
+});
+
+app.get('/token', (req, res) => {
+    if (!req.ip.startsWith('127.') && !req.ip.startsWith('::1')) {
+        return res.status(403).send("Accesso negato");
+    }
+    
+    db.get("SELECT * FROM token WHERE expires>?", [Date.now()], (err, row) => {
+        if (err || !row) return res.status(404).send("Nessun token valido");
+        res.send(row.value);
+    });
+    });
+
+// --- Avvio server ---
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server in LAN su http://<IP_LOCALE>:${PORT}`);
+});
+
+

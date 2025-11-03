@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Token Presenze</title>
+<style>
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: white;
+    color: #0f0;
+    font-family: monospace;
+  }
+
+  #token {
+    font-size: 8rem;
+    letter-spacing: 1rem;
+    text-shadow: 0 0 20px #0f0;
+    margin-bottom: 40px;
+  }
+
+  #qrcode {
+    margin-top: 20px;
+  }
+
+  #status {
+    position: fixed;
+    bottom: 10px;
+    font-size: 2rem;
+    color: #f00;
+  }
+</style>
+</head>
+<body>
+    <div id="token">---</div>
+    <div id="qrcode"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script>
+    const ipServer = location.hostname; // IP o hostname del server
+    const frontendPath = "/index.html"; // pagina studenti
+    let qrcode = new QRCode(document.getElementById("qrcode"), { width: 200, height: 200 });
+    
+    async function aggiornaToken() {
+      try {
+        const res = await fetch('/token');
+        if (!res.ok) throw new Error("Token non disponibile");
+        const token = await res.text();
+    
+        document.getElementById('token').textContent = token;
+    
+        // QR code punta a index.html con token precompilato
+        const url = `http://10.176.0.99:3000?token=${token}`;
+        qrcode.clear();
+        qrcode.makeCode(url);
+    
+      } catch (e) {
+        console.error(e);
+        document.getElementById('token').textContent = '---';
+      }
+    }
+    
+    setInterval(aggiornaToken, 1000);
+    aggiornaToken();
+    </script>
+</body>
+</html>
