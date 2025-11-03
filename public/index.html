@@ -1,117 +1,155 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Presenze</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(120deg, #2980b9, #6dd5fa);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-  }
-
-  .container {
-    background: white;
-    padding: 40px 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-  }
-
-  h2 {
-    margin-bottom: 30px;
-    color: #333;
-  }
-
-  input {
-    width: 100%;
-    padding: 15px 10px;
-    margin-bottom: 20px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 1.2rem;
-    box-sizing: border-box;
-  }
-
-  button {
-    width: 100%;
-    padding: 15px;
-    font-size: 1.2rem;
-    background: #2980b9;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  button:hover {
-    background: #3498db;
-  }
-
-  #status {
-    margin-top: 15px;
-    font-size: 1rem;
-    color: #e74c3c;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Presenze SIGI</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h2>Registra Presenza</h2>
-    <input id="matricola" placeholder="Matricola">
-    <input id="email" placeholder="Email">
-    <input id="token" placeholder="Token">
-    <button id="btn">Invia</button>
-    <div id="status"></div>
-  </div>
+    <h1>Registro Presenze<br>Sistemi Informativi e Gestione d'Impresa</h1>
+    <h2>Lezione del </h2> <!-- inserimento automatico della data -->
 
+    <form>
+        <input type="text" name="matricola" id="matricola" placeholder="Matricola" required>
+        <input type="text" name="token" id="token" placeholder="Token" required>
+        <p id="status"></p>
+        <input type="button" id="btn" value="Invia">
+    </form>
+
+    <h3>A.A. 2025/2026</h3>
+
+    <div id="success-popup" class="popup-success">
+        <div class="popup-content">
+            <h2>Registrazione completata ✅</h2>
+            <p>La tua presenza è stata registrata con successo.</p>
+            <button id="close-success">Chiudi</button>
+        </div>
+    </div>
+
+</body>
 <script>
-const params = new URLSearchParams(window.location.search);
-const tokenFromURL = params.get('token');
-if (tokenFromURL) {
-  document.getElementById('token').value = tokenFromURL;
-}
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromURL = params.get('token');
+    if (tokenFromURL) {
+      document.getElementById('token').value = tokenFromURL;
+    }
+    
+    document.getElementById('btn').onclick = async () => {
+      const matricola = document.getElementById('matricola').value.trim();
+      const token = document.getElementById('token').value.trim();
+      const status = document.getElementById('status');
+    
+      if (!matricola || !token) {
+        status.textContent = "Compila tutti i campi!";
+        return;
+      }
+    
+      try {
+        const res = await fetch('/registra', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ matricola, token })
+        });
+    
+        const data = await res.json();
+        status.textContent = data.msg;
+        status.style.color = data.status === "ok" ? "#27ae60" : "#e74c3c";
+    
+        if (data.status === "ok") {
+          document.getElementById('matricola').value = '';
+        }
+      } catch (e) {
+        console.error(e);
+        status.textContent = "Errore di connessione!";
+        status.style.color = "#e74c3c";
+      }
+    };
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("btn");
+        const matricolaInput = document.getElementById("matricola");
+        const tokenInput = document.getElementById("token");
+        const statusMsg = document.getElementById("status");
 
-document.getElementById('btn').onclick = async () => {
-  const matricola = document.getElementById('matricola').value.trim();
-  const email = document.getElementById('email').value.trim();
-  const token = document.getElementById('token').value.trim();
-  const status = document.getElementById('status');
+        function showError(message, input) {
+            statusMsg.textContent = message;
+            statusMsg.classList.add("show");
+            input.classList.add("error");
+        }
 
-  if (!matricola || !email || !token) {
-    status.textContent = "Compila tutti i campi!";
-    return;
-  }
+        function clearError() {
+            statusMsg.textContent = "";
+            statusMsg.classList.remove("show");
+            matricolaInput.classList.remove("error");
+            tokenInput.classList.remove("error");
+        }
 
-  try {
-    const res = await fetch('/registra', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ matricola, email, token })
+        btn.addEventListener("click", () => {
+            clearError();
+
+            const matricola = matricolaInput.value.trim();
+            const token = tokenInput.value.trim();
+
+            // 1️⃣ Controllo matricola inserita
+            if (!matricola) {
+                showError("Compila tutti i campi per riprovare.", matricolaInput);
+                return;
+            }
+
+            // 2️⃣ Controllo matricola valida (6 cifre)
+            if (!/^\d{6}$/.test(matricola)) {
+                showError("La matricola non è valida. Riprova.", matricolaInput);
+                return;
+            }
+
+            // 3️⃣ Controllo token inserito
+            if (!token) {
+                showError("Compila tutti i campi per riprovare.", tokenInput);
+                return;
+            }
+
+            // 4️⃣ Controllo token valido (6 caratteri alfanumerici)
+            if (!/^[A-Za-z0-9]{6}$/.test(token)) {
+                showError("Il token è scaduto. Riprova.", tokenInput);
+                return;
+            }
+
+            // ✅ Tutto ok
+            clearError();
+            // Mostra popup di successo
+            const successPopup = document.getElementById("success-popup");
+            const closeBtn = document.getElementById("close-success");
+
+            successPopup.classList.add("active");
+
+            // Disabilita temporaneamente il form
+            document.querySelector("form").style.pointerEvents = "none";
+
+            // Chiudi popup e riabilita form
+            closeBtn.addEventListener("click", () => {
+                successPopup.classList.remove("active");
+                document.querySelector("form").style.pointerEvents = "auto";
+                matricolaInput.value = "";
+                tokenInput.value = "";
+            });
+
+        });
+
+        // Rimuove l’errore se l’utente modifica un campo
+        [matricolaInput, tokenInput].forEach(input => {
+            input.addEventListener("input", () => {
+                if (statusMsg.textContent !== "") {
+                    statusMsg.textContent = "";
+                    statusMsg.classList.remove("show");
+                    matricolaInput.classList.remove("error");
+                    tokenInput.classList.remove("error");
+                }
+            });
+        });
     });
 
-    const data = await res.json();
-    status.textContent = data.msg;
-    status.style.color = data.status === "ok" ? "#27ae60" : "#e74c3c";
-
-    if (data.status === "ok") {
-      document.getElementById('matricola').value = '';
-      document.getElementById('email').value = '';
-    }
-  } catch (e) {
-    console.error(e);
-    status.textContent = "Errore di connessione!";
-    status.style.color = "#e74c3c";
-  }
-};
 </script>
-</body>
+
 </html>
