@@ -53,6 +53,15 @@
                 <button id="confirmLessonBtn">Crea</button>
             </div>
         </div>
+
+        <!-- Modal presenze studenti -->
+        <div id="attendanceModalOverlay" class="modal-overlay" style="display:none;">
+            <div id="attendanceModal" class="modal">
+                <h2 id="attendanceTitle"></h2>
+                <ul id="attendanceList"></ul>
+                <button id="closeAttendanceBtn">Chiudi</button>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -79,6 +88,12 @@
         const lessonModalOverlay = document.getElementById('lessonModalOverlay');
         const lessonDateTimeInput = document.getElementById('lessonDateTime');
         const confirmLessonBtn = document.getElementById('confirmLessonBtn');
+
+        const attendanceModalOverlay = document.getElementById('attendanceModalOverlay');
+        const attendanceModal = document.getElementById('attendanceModal');
+        const attendanceList = document.getElementById('attendanceList');
+        const attendanceClassName = document.getElementById('attendanceTitle');
+        const closeAttendanceBtn = document.getElementById('closeAttendanceBtn');
 
         let currentClassId = null;
         const classCards = new Map();
@@ -134,7 +149,7 @@
                 if(!res.ok) throw new Error();
                 const data = await res.json();
                 loadClasses(data);
-                addClassBtn.style.display = 'inline-block'; // mostra pulsante quando lista classi visibile
+                addClassBtn.style.display = 'inline-block';
             }catch(err){
                 console.error(err);
                 classesGrid.textContent = 'Errore caricamento classi';
@@ -252,15 +267,74 @@
                     }
                 };
                 li.appendChild(deleteBtn);
+
+                // Clic per aprire presenze
+                li.onclick = (e)=>{
+                    if(e.target !== deleteBtn) openAttendance(l.id, classNameEl.textContent);
+                };
+
                 lezioniList.appendChild(li);
             });
         }
+
+        // --- Presenze ---
+        function openAttendance(lezioneId, className) {
+        // Nasconde tutto il resto
+        classesGrid.style.display = 'none';
+        classDetail.style.display = 'none';
+        addClassBtn.style.display = 'none';
+
+        attendanceClassName.textContent = `Presenze: `; 
+        attendanceList.innerHTML = '';
+
+        fetch(`http://localhost:3000/lezioni/${lezioneId}/presenze`)
+            .then(res => res.json())
+            .then(data => {
+                data.forEach(studente => {
+                    const li = document.createElement('li');
+
+                    const nomeSpan = document.createElement('span');
+                    nomeSpan.textContent = `${studente.nome} ${studente.cognome}`;
+                    nomeSpan.style.marginRight = '10px';
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.checked = studente.presente === 1;
+
+                    const statoSpan = document.createElement('span');
+                    statoSpan.textContent = checkbox.checked ? 'Presente' : 'Assente';
+                    statoSpan.style.marginLeft = '5px';
+
+                    checkbox.addEventListener('change', ()=>{
+                        statoSpan.textContent = checkbox.checked ? 'Presente' : 'Assente';
+                        fetch(`http://localhost:3000/presenze/${lezioneId}/${studente.matricola}`, {
+                            method:'PATCH',
+                            headers:{'Content-Type':'application/json'},
+                            body: JSON.stringify({presente: checkbox.checked ? 1 : 0})
+                        });
+                    });
+
+                    li.appendChild(nomeSpan);
+                    li.appendChild(checkbox);
+                    li.appendChild(statoSpan);
+
+                    attendanceList.appendChild(li);
+                });
+
+                attendanceModalOverlay.style.display='flex';
+            });
+    }
+
+    closeAttendanceBtn.onclick = () => {
+        attendanceModalOverlay.style.display = 'none';
+        classDetail.style.display = currentClassId ? 'block' : 'none';
+    };
 
         // --- UI ---
         function openClassDetail(classeId,classeNome){
             currentClassId=classeId;
             classesGrid.style.display='none';
-            addClassBtn.style.display='none'; // nasconde pulsante +
+            addClassBtn.style.display='none';
             classDetail.style.display='block';
             classNameEl.textContent=classeNome;
             fetchStudenti(classeId);
@@ -270,7 +344,7 @@
         function closeClassDetail(){
             classDetail.style.display='none';
             classesGrid.style.display='grid';
-            addClassBtn.style.display='inline-block'; // mostra pulsante +
+            addClassBtn.style.display='inline-block';
         }
 
         // --- Eventi ---
@@ -326,5 +400,3 @@
     </script>
 </body>
 </html>
-
-

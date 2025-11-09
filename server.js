@@ -149,7 +149,18 @@ app.post('/classi/:id/lezioni', (req, res) => {
   const query = `INSERT INTO lezioni (classe_id, data) VALUES (?, ?)`;
   db.run(query, [classeId, data.trim()], function(err) {
       if (err) return res.status(500).json({ error: err.message });
-      res.json({ id: this.lastID, classe_id: classeId, data });
+
+      const lezioneId = this.lastID;
+
+      db.all(`SELECT matricola FROM studenti WHERE classe_id = ?`, [classeId], (err, studenti) => {
+          if (err) return console.error(err);
+
+          const stmt = db.prepare(`INSERT INTO presenze (lezione_id, matricola, presente) VALUES (?, ?, 0)`);
+          studenti.forEach(s => stmt.run(lezioneId, s.matricola));
+          stmt.finalize();
+
+          res.json({ id: lezioneId, classe_id: classeId, data });
+      });
   });
 });
 
@@ -179,6 +190,21 @@ app.delete('/lezioni/:id', (req, res) => {
       if (this.changes === 0) return res.status(404).json({ error: 'Lezione non trovata' });
       res.json({ success: true });
   });
+});
+
+/* PATCH */
+app.patch('/presenze/:lezioneId/:matricola', (req, res) => {
+  const { lezioneId, matricola } = req.params;
+  const { presente } = req.body;
+
+  db.run(
+      `UPDATE presenze SET presente = ? WHERE lezione_id = ? AND matricola = ?`,
+      [presente, lezioneId, matricola],
+      function(err) {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({ success: true });
+      }
+  );
 });
 
 /* START SERVER */
