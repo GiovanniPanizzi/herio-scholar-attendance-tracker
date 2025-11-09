@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Presenze</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>Registro Presenze</header>
+    <main>
+        <div class="classes-grid" id="classesGrid">
+        </div>
+    </main>
+
+    <script>
+        const fakeClassi = [
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 },
+            { id: 1, nome: "Classe 1A", studenti: 25 },
+            { id: 2, nome: "Classe 2B", studenti: 22 },
+            { id: 3, nome: "Classe 3C", studenti: 28 }
+        ];
+
+        const classesGrid = document.getElementById('classesGrid');
+
+        function loadClasses(classi) {
+            classesGrid.innerHTML = '';
+            classi.forEach(classe => {
+                const div = document.createElement('div');
+                div.classList.add('class-card');
+                div.textContent = classe.nome;
+
+                const badge = document.createElement('span');
+                badge.classList.add('badge');
+                badge.textContent = `${classe.studenti} studenti`;
+                div.appendChild(badge);
+
+                div.onclick = () => alert(`Hai cliccato su ${classe.nome}`);
+                classesGrid.appendChild(div);
+            });
+        }
+
+        loadClasses(fakeClassi);
+
+        function fetchClassi() {
+            return new Promise(resolve => {
+                setTimeout(() => resolve(fakeClassi), 200);
+            });
+        }
+
+        fetchClassi().then(loadClasses);
+    </script>
+</body>
+</html>

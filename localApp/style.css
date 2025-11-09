@@ -1,0 +1,69 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+    background-color: #ecf0f1;
+}
+
+/* Header */
+header {
+    background-color: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    font-size: 3rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Main */
+main {
+    height: calc(100% - 140px); /* header + eventual padding/future footer */
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+/* Grid classi */
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem;
+}
+
+/* Card singola classe migliorata */
+.class-card {
+    background: linear-gradient(145deg, #6fb1fc, #1e70d1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    border-radius: 20px;
+    text-align: center;
+    padding: 1.5rem;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* Hover elegante */
+.class-card:hover {
+    transform: translateY(-5px) scale(1.07);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+}
+
+
+
