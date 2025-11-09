@@ -31,7 +31,7 @@ erDiagram
 
     TOKENS {
         string token PK
-        int lezione_id FK, UNIQUE
+        int lezione_id FK
         string data_creazione
     }
 
@@ -39,5 +39,5 @@ erDiagram
     CLASSI ||--o{ LEZIONI : tiene
     LEZIONI ||--o{ PRESENZE : registra
     STUDENTI ||--o{ PRESENZE : partecipa
-    LEZIONI ||--o{ TOKENS : ha_token
+    LEZIONI ||--o| TOKENS : ha
 ```
