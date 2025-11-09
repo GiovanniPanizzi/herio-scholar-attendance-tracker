@@ -112,6 +112,43 @@ app.post('/classi', (req, res) => {
   });
 });
 
+app.post('/classi/:id/studenti', (req, res) => {
+  const classeId = req.params.id;
+  const { matricola, nome, cognome } = req.body;
+
+  if (!matricola || !nome || !cognome) {
+      return res.status(400).json({ error: 'Matricola, nome e cognome sono obbligatori' });
+  }
+
+  const query = `INSERT INTO studenti (matricola, nome, cognome, classe_id) VALUES (?, ?, ?, ?)`;
+  db.run(query, [matricola.trim(), nome.trim(), cognome.trim(), classeId], function(err) {
+      if (err) {
+          console.error(err);
+          return res.status(500).json({ error: err.message });
+      }
+      res.json({ matricola, nome, cognome, classe_id: classeId });
+  });
+});
+
+/* DELETE API */
+app.delete('/classi/:id', (req, res) => {
+  const classeId = req.params.id;
+  db.run(`DELETE FROM classi WHERE id = ?`, [classeId], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      if (this.changes === 0) return res.status(404).json({ error: 'Classe non trovata' });
+      res.json({ success: true });
+  });
+});
+
+app.delete('/studenti/:matricola', (req, res) => {
+  const matricola = req.params.matricola;
+  db.run(`DELETE FROM studenti WHERE matricola = ?`, [matricola], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      if (this.changes === 0) return res.status(404).json({ error: 'Studente non trovato' });
+      res.json({ success: true });
+  });
+});
+
 /* START SERVER */
 app.listen(PORT, () => {
     console.log(`Server in ascolto su http://localhost:${PORT}`);
