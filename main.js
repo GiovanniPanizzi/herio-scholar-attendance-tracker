@@ -1,20 +1,18 @@
 const { app, BrowserWindow } = require('electron');
-const path = require('path');
+const { startServer } = require('./server');
 
 function createWindow() {
     const win = new BrowserWindow({
         width: 800,
         height: 600,
-        webPreferences: {
-            nodeIntegration: true,
-            contextIsolation: false
-        }
+        webPreferences: { nodeIntegration: true, contextIsolation: false }
     });
-
-    win.loadFile('localApp/index.html'); 
+    win.loadFile('localApp/index.html');
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    createWindow();
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
