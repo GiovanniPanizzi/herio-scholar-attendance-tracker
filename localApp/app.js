@@ -1,0 +1,458 @@
+const classesGrid = document.getElementById('classesGrid');
+const addClassBtn = document.getElementById('addClassBtn');
+const modalOverlay = document.getElementById('modalOverlay');
+const newClassNameInput = document.getElementById('newClassName');
+const createClassBtn = document.getElementById('createClassBtn');
+
+const classDetail = document.getElementById('classDetail');
+const classNameEl = document.getElementById('className');
+const backToClassesBtn = document.getElementById('backToClasses');
+const addStudentBtn = document.getElementById('addStudentBtn');
+const studentList = document.getElementById('studentList');
+
+const studentModalOverlay = document.getElementById('studentModalOverlay');
+const studentMatricolaInput = document.getElementById('studentMatricola');
+const studentNameInput = document.getElementById('studentName');
+const studentSurnameInput = document.getElementById('studentSurname');
+const createStudentBtn = document.getElementById('createStudentBtn');
+
+const lezioniList = document.getElementById('lezioniList');
+const createLessonBtn = document.getElementById('createLessonBtn');
+const lessonModalOverlay = document.getElementById('lessonModalOverlay');
+const lessonDateTimeInput = document.getElementById('lessonDateTime');
+const confirmLessonBtn = document.getElementById('confirmLessonBtn');
+
+const attendanceModalOverlay = document.getElementById('attendanceModalOverlay');
+const attendanceModal = document.getElementById('attendanceModal');
+const attendanceList = document.getElementById('attendanceList');
+const attendanceClassName = document.getElementById('attendanceTitle');
+const closeAttendanceBtn = document.getElementById('closeAttendanceBtn');
+
+let currentClassId = null;
+let currentLezioneId = null;
+
+const classCards = new Map();
+
+// --- Classi ---
+function createClassCard(classe){
+    const div = document.createElement('div');
+    div.classList.add('class-card');
+
+    const nome = document.createElement('h3');
+    nome.textContent = classe.nome;
+    div.appendChild(nome);
+
+    const badge = document.createElement('span');
+    badge.classList.add('badge');
+    badge.textContent = `${classe.studenti || 0} studenti`;
+    div.appendChild(badge);
+
+    // Pulsante elimina classe
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '✖';
+    deleteBtn.classList.add('delete-btn');
+    deleteBtn.style.position = 'absolute';
+    deleteBtn.style.left = '8px';
+    deleteBtn.style.bottom = '8px';
+    deleteBtn.onclick = async (e) => {
+        e.stopPropagation();
+        if(!confirm(`Vuoi eliminare la classe "${classe.nome}"?`)) return;
+        try{
+            const res = await fetch(`http://localhost:3000/classi/${classe.id}`, {method:'DELETE'});
+            if(!res.ok) throw new Error();
+            fetchClassi();
+        }catch(err){
+            console.error(err);
+            alert('Errore eliminazione classe');
+        }
+    };
+    div.appendChild(deleteBtn);
+
+    div.onclick = () => openClassDetail(classe.id, classe.nome);
+    classCards.set(classe.id, div);
+    return div;
+}
+
+function loadClasses(classi){
+    classesGrid.innerHTML = '';
+    classi.forEach(c => classesGrid.appendChild(createClassCard(c)));
+}
+
+async function fetchClassi(){
+    try{
+        const res = await fetch('http://localhost:3000/classi-con-numero-studenti');
+        if(!res.ok) throw new Error();
+        const data = await res.json();
+        loadClasses(data);
+        addClassBtn.style.display = 'inline-block';
+    }catch(err){
+        console.error(err);
+        classesGrid.textContent = 'Errore caricamento classi';
+    }
+}
+
+async function creaClasse(nome){
+    if(!nome) return alert('Inserisci un nome valido');
+    try{
+        const res = await fetch('http://localhost:3000/classi',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({nome})
+        });
+        if(!res.ok) throw new Error();
+        modalOverlay.style.display='none';
+        fetchClassi();
+    }catch(err){
+        console.error(err);
+        alert('Errore creazione classe');
+    }
+}
+
+// --- Studenti ---
+async function fetchStudenti(classeId){
+    try{
+        const res = await fetch(`http://localhost:3000/classi/${classeId}/studenti`);
+        const studenti = await res.json();
+        loadStudentList(studenti);
+
+        // Aggiorna badge
+        const card = classCards.get(classeId);
+        if(card){
+            const badge = card.querySelector('.badge');
+            badge.textContent = `${studenti.length} studenti`;
+        }
+    }catch(err){
+        console.error(err);
+        studentList.innerHTML = '<li>Errore caricamento studenti</li>';
+    }
+}
+
+function loadStudentList(studenti){
+    studentList.innerHTML = '';
+    studenti.forEach(s=>{
+        const li = document.createElement('li');
+        li.textContent = `${s.matricola} - ${s.nome} ${s.cognome}`;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent='✖';
+        deleteBtn.classList.add('delete-btn');
+        deleteBtn.onclick=async()=>{
+            if(!confirm(`Vuoi eliminare lo studente "${s.nome} ${s.cognome}"?`)) return;
+            try{
+                const res = await fetch(`http://localhost:3000/studenti/${s.matricola}/${currentClassId}`, { method:'DELETE' });
+                if(!res.ok) throw new Error();
+                fetchStudenti(currentClassId);
+            }catch(err){
+                console.error(err);
+                alert('Errore eliminazione studente');
+            }
+        };
+        li.appendChild(deleteBtn);
+        studentList.appendChild(li);
+    });
+}
+
+async function creaStudente(matricola, nome, cognome) {
+    if (!matricola || !nome || !cognome) {
+        return alert('Inserisci tutti i dati: Matricola, Nome e Cognome.');
+    }
+
+    if (!/^\d{6}$/.test(matricola)) {
+        return alert('La Matricola deve essere composta esattamente da 6 cifre numeriche.');
+    }
+
+    const trimmedMatricola = matricola.trim(); 
+    const trimmedNome = nome.trim();
+    const trimmedCognome = cognome.trim();
+
+    try {
+        const res = await fetch(`http://localhost:3000/classi/${currentClassId}/studenti`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matricola: trimmedMatricola, nome: trimmedNome, cognome: trimmedCognome })
+        });
+
+        if (res.status === 500) {
+            const errorData = await res.json();
+            if (errorData.error && errorData.error.includes('UNIQUE constraint failed')) {
+                return alert('Errore: Matricola già esistente in questa classe.');
+            }
+            throw new Error('Errore server sconosciuto.');
+        }
+
+        if (!res.ok) throw new Error();
+        
+        studentModalOverlay.style.display = 'none';
+        fetchStudenti(currentClassId);
+    } catch (err) {
+        console.error(err);
+        alert('Errore aggiunta studente. Controlla la console per i dettagli.');
+    }
+}
+
+// --- Lezioni ---
+async function fetchLezioni(classeId){
+    try{
+        const res = await fetch(`http://localhost:3000/classi/${classeId}/lezioni`);
+        const lezioni = await res.json();
+        loadLezioni(lezioni);
+    }catch(err){
+        console.error(err);
+        lezioniList.innerHTML='<li>Errore caricamento lezioni</li>';
+    }
+}
+
+function loadLezioni(lezioni){
+    lezioniList.innerHTML='';
+    lezioni.forEach(l=>{
+        const li = document.createElement('li');
+
+        const rawDate = l.data; 
+
+        const dateObj = new Date(rawDate);
+
+        const formattedDate = dateObj.toLocaleString('it-IT', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false 
+        });
+
+        li.textContent = `${formattedDate}`;
+
+        const deleteBtn=document.createElement('button');
+        deleteBtn.textContent='✖';
+
+        deleteBtn.classList.add('delete-btn');
+        deleteBtn.onclick=async()=>{
+            if(!confirm('Vuoi eliminare questa lezione?')) return;
+            try{
+                const res=await fetch(`http://localhost:3000/lezioni/${l.id}`,{method:'DELETE'});
+                if(!res.ok) throw new Error();
+                fetchLezioni(currentClassId);
+            }catch(err){
+                console.error(err);
+                alert('Errore eliminazione lezione');
+            }
+        };
+        li.appendChild(deleteBtn);
+
+        li.onclick = (e)=>{
+            if(e.target !== deleteBtn) openAttendance(l.id, classNameEl.textContent);
+        };
+
+        lezioniList.appendChild(li);
+    });
+}
+
+// --- Presenze ---
+async function openAttendance(lezioneId, className) {
+    currentLezioneId = lezioneId;
+    classesGrid.style.display = 'none';
+    classDetail.style.display = 'none';
+    addClassBtn.style.display = 'none';
+    attendanceModalOverlay.style.display = 'flex';
+    attendanceClassName.textContent = `Presenze - ${className}`;
+    attendanceList.innerHTML = '';
+
+    await fetch(`http://localhost:3000/lezioni/${lezioneId}/sincronizza-presenze`, { method: 'POST' });
+
+    fetch(`http://localhost:3000/lezioni/${lezioneId}/presenze`)
+        .then(res => res.json())
+        .then(studenti => {
+            studenti.forEach(studente => {
+                const li = document.createElement('li');
+                li.textContent = `${studente.nome} ${studente.cognome}`;
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = studente.presente === 1;
+
+                checkbox.onchange = async () => {
+                    await fetch(`http://localhost:3000/presenze/${lezioneId}/${studente.matricola}`, { 
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ presente: checkbox.checked ? 1 : 0 })
+                    });
+                };
+
+                li.appendChild(checkbox);
+                attendanceList.appendChild(li);
+            });
+        })
+        .catch(err => {
+            console.error(err);
+            attendanceList.innerHTML = '<li>Errore caricamento presenze</li>';
+        });
+}
+
+
+closeAttendanceBtn.onclick = () => {
+attendanceModalOverlay.style.display = 'none';
+classDetail.style.display = currentClassId ? 'block' : 'none';
+};
+
+// --- UI ---
+function openClassDetail(classeId,classeNome){
+    currentClassId=classeId;
+    classesGrid.style.display='none';
+    addClassBtn.style.display='none';
+    classDetail.style.display='block';
+    classNameEl.textContent=classeNome;
+    fetchStudenti(classeId);
+    fetchLezioni(classeId);
+}
+
+function closeClassDetail(){
+    classDetail.style.display='none';
+    classesGrid.style.display='grid';
+    addClassBtn.style.display='inline-block';
+}
+
+// --- Eventi ---
+addClassBtn.onclick=()=>{
+    modalOverlay.style.display='flex';
+    newClassNameInput.value='';
+    newClassNameInput.focus();
+};
+createClassBtn.onclick=()=>creaClasse(newClassNameInput.value.trim());
+modalOverlay.onclick=e=>{if(e.target===modalOverlay) modalOverlay.style.display='none';};
+backToClassesBtn.onclick=closeClassDetail;
+
+addStudentBtn.onclick=()=>{
+    studentModalOverlay.style.display='flex';
+    studentMatricolaInput.value='';
+    studentNameInput.value='';
+    studentSurnameInput.value='';
+    studentMatricolaInput.focus();
+};
+createStudentBtn.onclick = () => creaStudente(
+    studentMatricolaInput.value,
+    studentNameInput.value,
+    studentSurnameInput.value
+);
+studentModalOverlay.onclick=e=>{if(e.target===studentModalOverlay) studentModalOverlay.style.display='none';};
+
+createLessonBtn.onclick=()=>{
+    lessonModalOverlay.style.display='flex';
+    lessonDateTimeInput.value='';
+    lessonDateTimeInput.focus();
+};
+confirmLessonBtn.onclick=async()=>{
+    const dataOra=lessonDateTimeInput.value;
+    if(!dataOra) return alert('Inserisci data e ora');
+    try{
+        const res=await fetch(`http://localhost:3000/classi/${currentClassId}/lezioni`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({data:dataOra})
+        });
+        if(!res.ok) throw new Error();
+        lessonModalOverlay.style.display='none';
+        fetchLezioni(currentClassId);
+    }catch(err){
+        console.error(err);
+        alert('Errore creazione lezione');
+    }
+};
+lessonModalOverlay.onclick=e=>{if(e.target===lessonModalOverlay) lessonModalOverlay.style.display='none';};
+
+const scanQRBtn = document.getElementById('scanQRBtn');
+const qrTokenOverlay = document.getElementById('qrTokenOverlay');
+const closeQRBtn = document.getElementById('closeQRBtn');
+
+let qrInterval = null;
+let countdownInterval = null;
+
+scanQRBtn.onclick = () => {
+    if (!currentLezioneId) { 
+        alert("Errore: ID Lezione non disponibile. Apri prima il registro presenze per una lezione.");
+        return;
+    }
+
+    qrTokenOverlay.style.display = 'flex';
+    document.getElementById('qrStatus').textContent = 'Generazione in corso...';
+    document.getElementById('qrToken').textContent = '---';
+    document.getElementById('qrCode').innerHTML = '';
+
+    if (qrInterval) clearInterval(qrInterval);
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    const fetchToken = async () => {
+        try {
+            const res = await fetch(`http://localhost:3000/lezioni/${currentLezioneId}/token`, {
+                method: 'POST'
+            });
+
+            if (!res.ok) throw new Error('Errore generazione token (API).');
+            const data = await res.json();
+
+            const ip = data.ip_server;
+            const token = data.token;
+            
+            // 3. Aggiornamento interfaccia
+            document.getElementById('qrToken').textContent = token;
+            document.getElementById('qrStatus').textContent = `Connettiti a ${ip}:${3000}`;
+
+            const qrEl = document.getElementById('qrCode');
+            qrEl.innerHTML = '';
+
+            const qrData = `http://${ip}:3000/?token=${token}&lezione=${currentLezioneId}`;
+            new QRCode(qrEl, {
+                text: qrData,
+                width: 200,
+                height: 200
+            });
+
+            // 5. Gestione del Countdown (25 secondi)
+            let countdown = 25;
+            const timerEl = document.getElementById('qrTimer');
+            clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                countdown--;
+                if (countdown < 0) {
+                    countdown = 25; 
+                }
+                timerEl.textContent = countdown + 's';
+
+            }, 1000);
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('qrStatus').textContent = 'Errore nel caricamento del token. Verifica che il server sia attivo.';
+            document.getElementById('qrToken').textContent = '---';
+            document.getElementById('qrCode').innerHTML = '';
+            document.getElementById('qrTimer').textContent = '--s';
+        }
+    };
+
+    fetchToken();
+
+    qrInterval = setInterval(fetchToken, 25000);
+};
+
+closeQRBtn.onclick = async () => {
+    qrTokenOverlay.style.display = 'none';
+
+    if (qrInterval) {
+        clearInterval(qrInterval);
+        qrInterval = null;
+    }
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+    }
+
+    try {
+        await fetch(`http://localhost:3000/lezioni/${currentLezioneId}/tokens`, {
+            method: 'DELETE'
+        });
+    } catch (err) {
+        console.error("Errore durante l'eliminazione del token:", err);
+    }
+};
+// --- Avvio ---
+fetchClassi();
