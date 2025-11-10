@@ -28,12 +28,21 @@
         <div id="classDetail" style="display:none;">
             <h2 id="className"></h2>
             <button id="backToClasses">← Torna alle classi</button>
-            <button id="addStudentBtn">Aggiungi Studente</button>
-            <ul id="studentList"></ul>
+            <button id="studentsViewBtn">Mostra studenti</button>
+            <button id="lectionsViewBtn">Mostra lezioni</button>
 
-            <h3>Lezioni</h3>
-            <button id="createLessonBtn">Crea Lezione</button>
-            <ul id="lezioniList"></ul>
+            <div id="studentsView">
+                <h3>Studenti</h3>
+                <button id="addStudentBtn">Aggiungi Studente</button>
+                <ul id="studentList"></ul>
+                <button class="backToClass">Torna alla classe</button>
+            </div>
+            <div id="lectionsView">
+                <h3>Lezioni</h3>
+                <button id="createLessonBtn">Crea Lezione</button>
+                <ul id="lezioniList"></ul>
+                <button class="backToClass">Torna alla classe</button>
+            </div>
         </div>
 
         <!-- Modal aggiunta studente -->

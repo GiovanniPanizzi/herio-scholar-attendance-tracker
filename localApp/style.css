@@ -48,7 +48,7 @@ h1 {
 }
 
 h2 {
-    font-size: 2.5rem;  
+    font-size: 4rem;  
     font-weight: 700;
     margin-bottom: 1.2rem;
     color: #2c3e50;
@@ -204,12 +204,12 @@ main {
 
 #classDetail h2 {
     margin-bottom: 1rem;
-    font-size: 2rem;
+    font-size: 4rem;
     color: #2c3e50;
 }
 
 #backToClasses,
-#addStudentBtn {
+#addStudentBtn, .backToClass, #studentsViewBtn, #lectionsViewBtn {
     padding: 0.5rem 1rem;
     margin-right: 0.5rem;
     margin-bottom: 1rem;
@@ -223,7 +223,7 @@ main {
 }
 
 #backToClasses:hover,
-#addStudentBtn:hover {
+#addStudentBtn:hover, .backToClass:hover, #studentsViewBtn:hover, #lectionsViewBtn:hover {
     background-color: #2980b9;
 }
 
@@ -241,6 +241,10 @@ main {
     font-weight: 500;
     display: flex;
     justify-content: space-between;
+}
+
+.backToClass {
+    display: none;
 }
 
 /* --- Modal aggiunta studente --- */
@@ -321,7 +325,7 @@ main {
 
 #lezioniContainer h2 {
     margin-bottom: 1rem;
-    font-size: 2rem;
+    font-size: 4rem;
     color: #2c3e50;
 }
 
@@ -430,6 +434,10 @@ main {
     transform: scale(1.05);
 }
 
+#className {
+    font-size: 8rem;
+}
+
 /* Aumentiamo padding e spazi */
 #classDetail, #lezioniContainer {
     padding: 2rem;
@@ -462,7 +470,8 @@ button {
 #addStudentBtn,
 #createStudentBtn,
 #confirmLessonBtn,
-#createLessonBtn {
+#createLessonBtn,
+.backToClass, #studentsViewBtn, #lectionsViewBtn {
     font-size: 1rem;
     padding: 0.6rem 1.2rem;
 }

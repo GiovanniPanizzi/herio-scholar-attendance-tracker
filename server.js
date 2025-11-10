@@ -198,6 +198,31 @@ app.post('/lezioni/:lezioneId/token', checkLocal, (req, res) => {
   });
 });
 
+app.get('/classi/:classeId/studenti-con-presenze', checkLocal, async (req, res) => {
+    const classeId = req.params.classeId;
+
+    const sql = `
+        SELECT
+            s.matricola, 
+            s.nome, 
+            s.cognome,
+            -- Conteggia le presenze per questo studente in tutte le lezioni di QUESTA classe
+            (SELECT COUNT(p.presente) 
+             FROM presenze p
+             WHERE p.matricola = s.matricola 
+             AND p.classe_id = s.classe_id -- Presenze devono corrispondere alla classe dello studente
+             AND p.presente = 1) AS presenze
+        FROM studenti s
+        WHERE s.classe_id = ? -- Seleziona solo gli studenti di questa classe
+        ORDER BY s.cognome, s.nome;
+    `;
+    
+    db.all(sql, [classeId], (err, rows) => { // Un solo parametro classeId
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
 /* --- POST API --- */
 app.post('/classi', checkLocal, (req, res) => {
 
