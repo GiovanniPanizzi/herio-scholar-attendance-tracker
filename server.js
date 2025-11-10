@@ -19,13 +19,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/dashboard-app', express.static(localAppPath));
 
 function checkLocal(req, res, next) {
-  const ip = req.ip || req.socket.remoteAddress;
-  // IPv4 localhost: 127.0.0.1, IPv6 localhost: ::1
-  if (ip === '127.0.0.1' || ip === '::1') {
-      next();
-  } else {
-      res.status(403).json({ error: 'Accesso consentito solo in locale' });
-  }
+    const ip = req.ip || req.socket.remoteAddress;
+    if (ip === '127.0.0.1' || ip === '::1') {
+        next();
+    } else {
+        res.status(403).json({ error: 'Accesso consentito solo in locale' });
+    }
 }
 
 const db = new sqlite3.Database(DB_PATH, (err) => {
@@ -155,16 +154,30 @@ app.get('/classi/:id/lezioni', checkLocal, (req, res) => {
 });
 
 function getLocalIP() {
-  const interfaces = os.networkInterfaces();
-  for (let name in interfaces) {
-      for (let iface of interfaces[name]) {
-          if (iface.family === 'IPv4' && !iface.internal) {
-              return iface.address;
-          }
-      }
+    const interfaces = os.networkInterfaces();
+    const candidates = [];
+
+    for (let name in interfaces) {
+        for (let iface of interfaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                if (!iface.address.startsWith('169.254.')) {
+                    candidates.push(iface.address);
+                }
+            }
+        }
+    }
+
+    const lanIP = candidates.find(ip => ip.startsWith('192.168.') || ip.startsWith('10.'));
+    if (lanIP) {
+        return lanIP;
+    }
+
+    if (candidates.length > 0) {
+        return candidates[0];
+    }
+  
+    return '127.0.0.1'; 
   }
-  return '127.0.0.1';
-}
 
 app.post('/lezioni/:lezioneId/token', checkLocal, (req, res) => {
   const { lezioneId } = req.params;
