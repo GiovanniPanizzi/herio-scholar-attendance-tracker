@@ -9,10 +9,14 @@ const PORT = 3000;
 const DB_FOLDER = global.DB_FOLDER || __dirname;
 const DB_PATH = path.join(DB_FOLDER, 'classes.db');
 
-app.use(express.json());
-app.use(express.static('public'));
+const isPackaged = require('electron').app ? require('electron').app.isPackaged : false;
+const localAppPath = isPackaged
+  ? path.join(process.resourcesPath, 'localApp')
+  : path.join(__dirname, 'localApp');
 
-app.use('/dashboard-app', express.static('localApp'));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/dashboard-app', express.static(localAppPath));
 
 function checkLocal(req, res, next) {
   const ip = req.ip || req.socket.remoteAddress;
