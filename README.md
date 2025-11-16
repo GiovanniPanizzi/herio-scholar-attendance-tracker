@@ -1,50 +1,71 @@
-# Registro Presenze SIGI
+# Herio: LAN Attendance Tracker (Electron Desktop App)
 
-App desktop sviluppata con **Electron** e **Node.js** per gestire classi, studenti, lezioni e presenze tramite qrcode, con database SQLite.
+****
+
+### 🌟 Project Description
+
+**Herio** is a robust, cross-platform **desktop application** designed for efficient **attendance tracking** in educational or organizational settings. Built using **Electron** and **Node.js**, it operates entirely on a **Local Area Network (LAN)**, providing a self-hosted, centralized system without requiring an external internet connection or cloud services. Attendance data for multiple classes is stored securely in a local **SQLite database**.
+
+This architecture makes Herio ideal for environments requiring quick, reliable, and private data management.
+
+---
+
+### 🚀 Key Features
+
+* **Offline LAN Operation:** The application is self-contained and runs on a local server (Node.js/Express) accessible only via the LAN, guaranteeing speed and data privacy.
+* **Electron Desktop Client:** Provides a fast, native-like user experience on Windows, macOS, and Linux for managing classes, students, and sessions.
+* **QR Code-Based Attendance:** Generates a unique, time-limited QR code for each lesson. Students simply scan the code using any mobile device to quickly and accurately register their presence.
+* **Multi-Class Management:** Manage multiple independent classes and their student rosters efficiently within the application.
+* **SQLite Database:** All class data, student information, and attendance records are stored locally in a single, portable SQLite database, simplifying backup and migration.
+* **IP Address Logging:** For enhanced security and audit trails, the application records the IP address from which the attendance was registered.
+
+### Database Schema Overview (SQLite)
+
+The application uses a relational schema designed for speed and data integrity, managed via SQLite.
 
 ```mermaid
 erDiagram
-    CLASSI {
+    CLASSES {
         int id PK
-        string nome
+        string name
     }
 
-    STUDENTI {
-        string matricola PK
-        int classe_id PK, FK
-        string nome
-        string cognome
+    STUDENTS {
+        string student_id PK
+        int class_id PK, FK
+        string first_name
+        string last_name
     }
 
-    LEZIONI {
+    LESSONS {
         int id PK
-        int classe_id FK
-        string data
+        int class_id FK
+        string date
     }
 
-    PRESENZE {
-        int lezione_id PK, FK
-        string matricola PK, FK
-        int classe_id PK, FK
-        int presente
+    ATTENDANCE {
+        int lesson_id PK, FK
+        string student_id PK, FK
+        int class_id PK, FK
+        int is_present
     }
 
     TOKENS {
         string token PK
-        int lezione_id FK
-        string data_creazione
+        int lesson_id FK
+        string created_at
     }
 
-    IP_ADDRESS {
+    IP_ADDRESSES {
         int id PK
-        int lezione_id FK
-        string ip 
+        int lesson_id FK
+        string ip_address 
     }
 
-    CLASSI ||--o{ STUDENTI : contiene
-    CLASSI ||--o{ LEZIONI : tiene
-    LEZIONI ||--o{ PRESENZE : registra
-    STUDENTI ||--o{ PRESENZE : partecipa
-    LEZIONI ||--o| TOKENS : ha
-    LEZIONI ||--o{ IP_ADDRESS : registra
+    CLASSES ||--o{ STUDENTS : contains
+    CLASSES ||--o{ LESSONS : holds
+    LESSONS ||--o{ ATTENDANCE : registers
+    STUDENTS ||--o{ ATTENDANCE : participates
+    LESSONS ||--o| TOKENS : has
+    LESSONS ||--o{ IP_ADDRESSES : registers
 ```
