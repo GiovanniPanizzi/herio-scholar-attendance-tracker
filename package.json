@@ -42,7 +42,7 @@
     "forge": {
       "packagerConfig": {
         "appBundleId": "com.giovannipanizzi.registropresenze",
-        "icon": "icons/app",
+        "icon": "icons/herio_light",
         "asar": true,
         "extraResource": [
           "localApp",
