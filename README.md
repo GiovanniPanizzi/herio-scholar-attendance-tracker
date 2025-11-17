@@ -69,3 +69,38 @@ erDiagram
     LESSONS ||--o| TOKENS : has
     LESSONS ||--o{ IP_ADDRESSES : registers
 ```
+
+## Build instructions
+
+To create a local build of **Herio**:
+
+1. **Clone the repository**:
+
+```bash
+git clone https://github.com/GiovanniPanizzi/herio-attendance-tracker.git
+cd herio-attendance-tracker
+```
+
+2. **Install dependencies**:
+```bash
+npm install
+```
+
+3. **Start the app in development mode**:
+```bash
+npm start
+```
+
+4. **Generate a release-ready build**:
+```bash
+npm run make
+```
+
+The generated files will be located in the out/make/ directory for each operating system:
+
+macOS: .zip or .dmg
+
+Windows: .exe and .zip
+
+Linux: .deb or .rpm
+
