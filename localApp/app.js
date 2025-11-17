@@ -564,11 +564,18 @@ addStudentBtn.onclick = () => {
     studentSurnameInput.value = '';
     studentIdInput.focus(); 
 };
-createStudentBtn.onclick = () => createStudent( 
-    studentIdInput.value, 
-    studentNameInput.value,
-    studentSurnameInput.value
-);
+createStudentBtn.onclick = async () => {
+    createStudentBtn.disabled = true;
+
+    await createStudent(
+        studentIdInput.value,
+        studentNameInput.value,
+        studentSurnameInput.value
+    );
+
+    createStudentBtn.disabled = false;
+};
+
 studentModalOverlay.onclick = e => { if (e.target === studentModalOverlay) studentModalOverlay.style.display = 'none'; };
 
 // Lesson Events
