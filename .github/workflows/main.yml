@@ -26,8 +26,21 @@ jobs:
       - name: Build Electron app
         run: npm run make
 
-      - name: Upload release artifacts
-        uses: actions/upload-artifact@v3
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
         with:
-          name: app-${{ matrix.os }}
-          path: out/make/*
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./out/make/*
+          asset_name: Herio-${{ matrix.os }}.zip
+          asset_content_type: application/zip
