@@ -628,7 +628,7 @@ button {
 /* QR Code */
 #qrCode {
     margin-top: 20px;
-    background: white; /* importante per QR */
+    background: white;
     padding: 10px;
     border-radius: 10px;
 }
@@ -655,4 +655,114 @@ button {
 
 #closeQRBtn:hover {
     background-color: #d32f2f;
+}
+
+/* --- Base container style (hidden by default) --- */
+#alert-message-container,
+#confirm-message-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 280px;
+    max-width: 90%;
+    padding: 20px 24px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18);
+    display: none;      /* toggled via JS */
+    flex-direction: column;
+    gap: 16px;
+    font-family: sans-serif;
+    animation: fadeIn 0.2s ease-out;
+    z-index: 9999;
+}
+
+/* Message text */
+#alertText,
+#confirmText {
+    font-size: 16px;
+    color: #333;
+    line-height: 1.4;
+}
+
+/* --- Buttons --- */
+#closeAlertBtn,
+#confirmYesBtn,
+#confirmNoBtn {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+#closeAlertBtn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #e5e5e5;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease;
+}
+
+#closeAlertBtn::before,
+#closeAlertBtn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 2px;
+    background: #333;
+    transform-origin: center;
+}
+
+#closeAlertBtn::before {
+    transform: translate(-50%, -50%) rotate(45deg);
+}
+
+#closeAlertBtn::after {
+    transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Hover */
+#closeAlertBtn:hover {
+    background: #d1d1d1;
+}
+
+/* Confirm buttons container */
+#confirm-message-container {
+    display: none;
+}
+
+#confirmYesBtn {
+    background: #28a745;
+    color: white;
+}
+#confirmYesBtn:hover {
+    background: #1f8d39;
+}
+
+#confirmNoBtn {
+    background: #ccc;
+    color: #333;
+}
+#confirmNoBtn:hover {
+    background: #b5b5b5;
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -48%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
 }
