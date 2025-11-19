@@ -61,3 +61,7 @@ header {
 #lessons-panel {
     display: none;
 }
+
+#chage-class-name-input {
+    display: none;
+}

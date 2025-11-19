@@ -18,6 +18,7 @@ const UI = {
     classDetail: {
         container: document.getElementById('class-detail'),
         title: document.getElementById('class-title'),
+        titleInput: document.getElementById('chage-class-name-input'),
         backBtn: document.getElementById('back-to-classes-btn'),
         changeNameBtn: document.getElementById('change-class-name-btn'),
         switchDetailBtn: document.getElementById('switch-detail-btn'),
@@ -241,11 +242,41 @@ UI.headers.classHeader.querySelector('#back-to-classes-btn').onclick = () => {
     show(UI.classes.container);
     hide(UI.headers.classHeader);
     show(UI.headers.classesHeader);
+    loadClasses();
 }
+
+UI.classDetail.changeNameBtn.onclick = () => {
+    UI.classDetail.titleInput.value = UI.classDetail.title.textContent;
+    UI.classDetail.titleInput.style.width = (UI.classDetail.title.textContent.length + 1) + 'ch';
+    show(UI.classDetail.titleInput);
+    hide(UI.classDetail.title);
+    hide(UI.classDetail.changeNameBtn);
+    UI.classDetail.titleInput.focus();
+}
+
+function saveClassName() {
+    const newName = UI.classDetail.titleInput.value.trim();
+    if (newName !== '') {
+        UI.classDetail.title.textContent = newName;
+        const classId = parseInt(UI.classDetail.title.dataset.classId);
+        const cls = db.classes.find(c => c.id === classId);
+        cls.name = UI.classDetail.titleInput.value.trim(); 
+        if (cls) cls.name = newName;
+    }
+
+    hide(UI.classDetail.titleInput);
+    show(UI.classDetail.title);
+    show(UI.classDetail.changeNameBtn);
+}
+
+UI.classDetail.titleInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') saveClassName();
+});
+
+UI.classDetail.titleInput.addEventListener('blur', saveClassName);
 
 UI.alerts.closeBtn.onclick = () => { hide(UI.alerts.container); UI.alerts.text.textContent = ''; };
 
-/* alerts and confirms */
 const launchAlert = (message) => { UI.alerts.text.textContent = message; show(UI.alerts.container, 'flex'); };
 
 const askConfirm = (message) => new Promise(resolve => {
