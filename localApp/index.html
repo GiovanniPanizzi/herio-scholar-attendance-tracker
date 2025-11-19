@@ -51,6 +51,7 @@
     
         <div id="class-detail" class="container">
             <div id="students-panel">
+                <h2>Students</h2>
                 <button id="add-student-btn" class="button"> &plus; </button>
                 <div id="add-student-modal-overlay" class="modal-overlay">
                     <div class="modal-content">
@@ -101,7 +102,15 @@
             </div>
 
             <div id="lessons-panel">
+                <h2>Lessons</h2>
                 <button id="add-lesson-btn" class="button"> &plus; </button>
+                <div id="add-lesson-modal-overlay" class="modal-overlay">
+                    <div class="modal-content">
+                        <input type="datetime-local" id="lessonDateTime" />
+                        <button id="create-lesson-btn" class="button"> Create Lesson </button>
+                        <button id="close-add-lesson-modal-btn" class="button"> &times; </button>
+                    </div>
+                </div>
                 <ul id="lessons-list">
                 </ul>
             </div>

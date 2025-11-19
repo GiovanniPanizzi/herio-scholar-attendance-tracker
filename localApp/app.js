@@ -23,6 +23,7 @@ const UI = {
         changeNameBtn: document.getElementById('change-class-name-btn'),
         switchDetailBtn: document.getElementById('switch-detail-btn'),
         studentsPanel: {
+            container: document.getElementById('students-panel'),
             addBtn: document.getElementById('add-student-btn'),
             qrBtn: document.getElementById('qr-class-modal-btn'),
             table: document.getElementById('students-table'),
@@ -43,7 +44,14 @@ const UI = {
         lessonsPanel: {
             container: document.getElementById('lessons-panel'),
             addBtn: document.getElementById('add-lesson-btn'),
-            list: document.getElementById('lessons-list')
+            list: document.getElementById('lessons-list'),
+
+            addModal: {
+                overlay: document.getElementById('add-lesson-modal-overlay'),
+                dateInput: document.getElementById('lessonDateTime'),
+                createBtn: document.getElementById('create-lesson-btn'),
+                closeBtn: document.getElementById('close-add-lesson-modal-btn')
+            }
         }
     },
     lessonDetail: {
@@ -75,8 +83,32 @@ const UI = {
 
 let db = {
     classes: [
-        { id: 1, name: "Matematica", students: [{ id: 1, firstName: "Mario", lastName: "Rossi", attendance: 0 }, { id: 2, firstName: "Luigi", lastName: "Bianchi", attendance: 0 }]},
-        { id: 2, name: "Fisica", students: [{ id: 3, firstName: "Anna", lastName: "Verdi", attendance: 0 }]}
+        { 
+            id: 1, 
+            name: "Matematica",
+
+            students: [
+                { id: 1, firstName: "Mario", lastName: "Rossi" },
+                { id: 2, firstName: "Luigi", lastName: "Bianchi" }
+            ],
+
+            lessons: [
+            ],
+
+            attendance: [
+            ]
+        },
+
+        { 
+            id: 2, 
+            name: "Fisica",
+            students: [
+                { id: 3, firstName: "Anna", lastName: "Verdi" },
+                { id: 4, firstName: "Sara", lastName: "Neri" }
+            ],
+            lessons: [],
+            attendance: []
+        }
     ]
 };
 
@@ -124,7 +156,7 @@ function openClassDetail(classId){
     loadStudentsTable(classId);
 }
 
-function loadStudentsTable(classId){
+function loadStudentsTable(classId) {
     const cls = db.classes.find(c => c.id === classId);
     if (!cls) return;
 
@@ -132,13 +164,17 @@ function loadStudentsTable(classId){
     tbody.innerHTML = '';
 
     cls.students.forEach(student => {
-        const row = document.createElement('tr');
+        // Conta le presenze dello studente
+        const attendedCount = cls.attendance
+            ? cls.attendance.filter(a => a.studentId === student.id && a.status === "present").length
+            : 0;
 
+        const row = document.createElement('tr');
         row.innerHTML = `
             <td>${student.id}</td>
             <td>${student.firstName}</td>
             <td>${student.lastName}</td>
-            <td>${student.attendance}</td>
+            <td>${attendedCount}</td>
             <td>
                 <button class="remove-student-btn button" data-student-id="${student.id}">×</button>
             </td>
@@ -146,6 +182,77 @@ function loadStudentsTable(classId){
 
         tbody.appendChild(row);
     });
+}
+
+function loadLessons(classId) {
+    const cls = db.classes.find(c => c.id === classId);
+    const list = UI.classDetail.lessonsPanel.list;
+
+    list.innerHTML = '';
+
+    cls.lessons.forEach(lesson => {
+        const li = document.createElement('li');
+        li.className = "lesson-card";
+        li.dataset.id = lesson.id;
+        li.textContent = `Lezione del ${lesson.date.replace('T', ' ')}`;
+        list.appendChild(li);
+    });
+}
+
+function loadAttendanceTable(classId, lessonId) {
+    const cls = db.classes.find(c => c.id === classId);
+    const tbody = UI.lessonDetail.attendanceTable.querySelector('tbody');
+    tbody.innerHTML = '';
+
+    cls.students.forEach(student => {
+        let attendance = cls.attendance.find(a =>
+            a.studentId === student.id && a.lessonId === lessonId
+        );
+
+        if (!attendance) {
+            attendance = {
+                studentId: student.id,
+                lessonId: lessonId,
+                status: "absent"
+            };
+            cls.attendance.push(attendance);
+        }
+
+        const checked = attendance.status === "present" ? "checked" : "";
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${student.id}</td>
+            <td>${student.firstName}</td>
+            <td>${student.lastName}</td>
+            <td>
+                <input 
+                    type="checkbox"
+                    class="attendance-checkbox"
+                    data-student-id="${student.id}"
+                    data-lesson-id="${lessonId}"
+                    ${checked}
+                >
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
+function openLessonDetail(classId, lessonId) {
+    currentLessonId = lessonId;
+    const cls = db.classes.find(c => c.id === classId);
+    const lesson = cls.lessons.find(l => l.id === lessonId);
+
+    UI.lessonDetail.title.textContent = `Lezione del ${lesson.date.replace('T', ' ')}`;
+
+    hide(UI.classDetail.container);
+    show(UI.lessonDetail.container);
+    hide(UI.headers.classHeader);
+    show(UI.headers.lessonHeader);
+
+    loadAttendanceTable(classId, lessonId);
 }
 
 /* EVENT LISTENERS */
@@ -235,7 +342,15 @@ UI.classDetail.titleInput.addEventListener('keydown', (e) => {
 
 UI.classDetail.titleInput.addEventListener('blur', saveClassName);
 
-UI.alerts.closeBtn.onclick = () => { hide(UI.alerts.container); UI.alerts.text.textContent = ''; };
+UI.classDetail.switchDetailBtn.onclick = () => {
+    if(UI.classDetail.studentsPanel.container.style.display !== 'none'){
+        hide(UI.classDetail.studentsPanel.container);
+        show(UI.classDetail.lessonsPanel.container);
+    } else {
+        show(UI.classDetail.studentsPanel.container);
+        hide(UI.classDetail.lessonsPanel.container);
+    }
+}
 
 // class detail - students panel
 UI.classDetail.studentsPanel.addBtn.onclick = async () => {
@@ -280,8 +395,6 @@ UI.classDetail.studentsPanel.table.addEventListener('click', async (e) => {
         loadStudentsTable(classId);
     }
 });
-
-
 
 let pendingStudents = [];
 
@@ -337,6 +450,121 @@ UI.classDetail.studentsPanel.addToClassBtn.onclick = () => {
     hide(UI.classDetail.studentsPanel.qrModal);
 };
 
+// class detail - lessons panel
+UI.classDetail.lessonsPanel.addBtn.onclick = () => {
+    show(UI.classDetail.lessonsPanel.addModal.overlay, 'flex');
+
+    const now = new Date();
+    UI.classDetail.lessonsPanel.addModal.dateInput.value =
+        now.toISOString().slice(0, 16);
+};
+
+UI.classDetail.lessonsPanel.addModal.createBtn.onclick = () => {
+    const classId = parseInt(UI.classDetail.title.dataset.classId);
+    const cls = db.classes.find(c => c.id === classId);
+
+    const dateTime = UI.classDetail.lessonsPanel.addModal.dateInput.value;
+
+    if (!dateTime) {
+        launchAlert("Inserisci una data valida.");
+        return;
+    }
+
+    const newLesson = {
+        id: cls.lessons.length > 0 ? Math.max(...cls.lessons.map(l => l.id)) + 1 : 1,
+        date: dateTime
+    };
+
+    cls.lessons.push(newLesson);
+
+    cls.students.forEach(stu => {
+        cls.attendance.push({
+            lessonId: newLesson.id,
+            studentId: stu.id,
+            status: "absent"  
+        });
+    });
+
+    loadLessons(cls.id);
+    hide(UI.classDetail.lessonsPanel.addModal.overlay);
+};
+
+UI.classDetail.lessonsPanel.addModal.closeBtn.onclick = () => {
+    hide(UI.classDetail.lessonsPanel.addModal.overlay);
+}
+
+UI.classDetail.lessonsPanel.list.addEventListener('click', (e) => {
+    const lessonCard = e.target.closest('.lesson-card');
+    if (!lessonCard) return;
+
+    const lessonId = parseInt(lessonCard.dataset.id);
+    openLessonDetail(currentClassId, lessonId);
+});
+
+// lesson detail - header
+UI.lessonDetail.backBtn.onclick = () => {
+    currentLessonId = null;
+    hide(UI.lessonDetail.container);
+    show(UI.classDetail.container);
+    hide(UI.headers.lessonHeader);
+    show(UI.headers.classHeader);
+    loadLessons(currentClassId);
+}
+
+// lesson detail - table
+UI.lessonDetail.attendanceTable.addEventListener('change', (e) => {
+    if (!e.target.classList.contains('attendance-checkbox')) return;
+
+    const studentId = parseInt(e.target.dataset.studentId);
+    const lessonId = parseInt(e.target.dataset.lessonId);
+    const classId = currentClassId;
+
+    const cls = db.classes.find(c => c.id === classId);
+
+    const attendance = cls.attendance.find(a =>
+        a.studentId === studentId && a.lessonId === lessonId
+    );
+
+    attendance.status = e.target.checked ? "present" : "absent";
+});
+
+// lesson detail - qr modal
+UI.lessonDetail.qrBtn.onclick = () => {
+    const classId = currentClassId;
+    const lessonId = currentLessonId;
+    const cls = db.classes.find(c => c.id === classId);
+    const lesson = cls.lessons.find(l => l.id === lessonId);
+
+    const qrData = `lesson:${classId}:${lessonId}:${Math.random().toString(36).substr(2, 6)}`;
+
+    UI.lessonDetail.qrModal.token.textContent = qrData.split(':')[3];
+
+    UI.lessonDetail.qrModal.code.innerHTML = '';
+    new QRCode(UI.lessonDetail.qrModal.code, {
+        text: qrData,
+        width: 200,
+        height: 200
+    });
+
+    let countdown = 60;
+    UI.lessonDetail.qrModal.timer.textContent = `Tempo rimanente: ${countdown}s`;
+
+    const timerInterval = setInterval(() => {
+        countdown--;
+        UI.lessonDetail.qrModal.timer.textContent = `Tempo rimanente: ${countdown}s`;
+        if (countdown <= 0) {
+            clearInterval(timerInterval);
+            hide(UI.lessonDetail.qrModal.overlay);
+        }
+    }, 1000);
+
+    show(UI.lessonDetail.qrModal.overlay, 'flex');
+};
+
+UI.lessonDetail.qrModal.closeBtn.onclick = () => {
+    hide(UI.lessonDetail.qrModal.overlay);
+}
+
 /* ALERTS & CONFIRMS */
 const launchAlert = (message) => { UI.alerts.text.textContent = message; show(UI.alerts.container, 'flex'); };
 
@@ -347,6 +575,8 @@ const askConfirm = (message) => new Promise(resolve => {
     UI.confirms.yesBtn.onclick = () => { cleanup(); resolve(true); };
     UI.confirms.noBtn.onclick = () => { cleanup(); resolve(false); };
 });
+
+UI.alerts.closeBtn.onclick = () => { hide(UI.alerts.container); UI.alerts.text.textContent = ''; };
 
 /* STATE */
 let currentClassId = null;
