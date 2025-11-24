@@ -14,11 +14,16 @@
         </div>
 
         <div id="class-header" class="header">
-            <button id="back-to-classes-btn" class="button">  &larr; </button>
-            <h1 id="class-title"></h1>
-            <input type="text" id="chage-class-name-input" class="input" />
-            <button id="change-class-name-btn" class="button"> Rename </button>
-            <button id="switch-detail-btn" class="button"> [Students / Lessons] </button>
+            <button id="back-to-classes-btn" class="button"> <img src="imgs/svg/arrowLeft.png" alt=""> </button>
+            <div style="display: flex; justify-content: center; align-items: center; gap: 8px;">
+                <h1 id="class-title"></h1>
+                <input type="text" id="chage-class-name-input" class="input" />
+                <button id="change-class-name-btn" class="button"> <img src="imgs/svg/edit.svg" alt=""> </button>
+            </div>
+            <button id="switch-detail-btn" class="button">
+                <div class="toggle"></div>
+                <span>Students</span>
+            </button>
         </div>
 
         <div id="lesson-header" class="header">
@@ -32,10 +37,12 @@
         <div id="classes" class="container">
             <div id="add-class-modal-overlay" class="modal-overlay">
                 <div class="modal-content">
-                    <label for="new-class-name-input">Class Name:</label>
+                    <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                        <label for="new-class-name-input" class="bold">Crea una nuova classe</label>
+                        <button id="close-add-class-modal-btn" class="button close-btn"> &times; </button>
+                    </div>
                     <input type="text" id="new-class-name-input" class="input"/>
                     <button id="create-class-btn" class="button"> Create Class </button>
-                    <button id="close-add-class-modal-btn" class="button"> &times; </button>
                 </div>
             </div>
             <ul id="classes-list">
@@ -44,10 +51,19 @@
     
         <div id="class-detail" class="container">
             <div id="students-panel">
-                <h2>Students</h2>
-                <button id="add-student-btn" class="button"> &plus; </button>
+                <div style="width: 100%; display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                    <h2>Students</h2>
+                    <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; gap: 12px;">
+                        <button id="add-student-btn" class="button"> &plus; </button>
+                        <button id="qr-class-modal-btn" class="button"> QR </button>
+                    </div>
+                </div>
                 <div id="add-student-modal-overlay" class="modal-overlay">
                     <div class="modal-content">
+                        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                            <label for="">Crea un nuovo studente</label>
+                            <button id="close-add-student-modal-btn" class="button close-btn"> &times; </button>
+                        </div>
                         <label for="student-id-input">Student ID:</label>
                         <input type="text" id="student-id-input" class="input"/>
                         <label for="student-first-name-input">First Name:</label>
@@ -55,10 +71,8 @@
                         <label for="student-last-name-input">Last Name:</label>
                         <input type="text" id="student-last-name-input" class="input"/>
                         <button id="create-student-btn" class="button"> Add Student </button>
-                        <button id="close-add-student-modal-btn" class="button"> &times; </button>
                     </div>
                 </div>
-                <button id="qr-class-modal-btn" class="button"> QR </button>
                 <table id="students-table" class="students-table">
                     <thead>
                         <tr>
@@ -75,6 +89,10 @@
                 
                 <div id="qr-class-modal" class="modal-overlay">
                     <div class="modal-content">
+                        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                            <label for="">Aggiungi studenti alla classe</label>
+                            <button id="close-qr-class-modal-btn" class="button close-btn"> &times; </button>
+                        </div>
                         <span id="class-qr-code"></span>
                         <table id="qr-class-students-table" class="students-table">
                             <thead>
@@ -89,7 +107,6 @@
                             </tbody>
                         </table>
                         <button id="add-students-to-class-btn" class="button"> Add students </button>
-                        <button id="close-qr-class-modal-btn" class="button"> &times; </button>
                     </div>
                 </div>
             </div>
@@ -99,9 +116,12 @@
                 <button id="add-lesson-btn" class="button"> &plus; </button>
                 <div id="add-lesson-modal-overlay" class="modal-overlay">
                     <div class="modal-content">
+                        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                            <label for="">Crea una nuova lezione</label>
+                            <button id="close-add-lesson-modal-btn" class="button close-btn"> &times; </button>
+                        </div>
                         <input type="datetime-local" id="lessonDateTime" />
                         <button id="create-lesson-btn" class="button"> Create Lesson </button>
-                        <button id="close-add-lesson-modal-btn" class="button"> &times; </button>
                     </div>
                 </div>
                 <ul id="lessons-list">
@@ -125,11 +145,16 @@
             </table>
 
             <div id="lesson-qr-modal-overlay" class="modal-overlay">
-                <div class="qr-container">
-                    <div id="lesson-qr-timer">25s</div>
-                    <div id="lesson-qr-token">---</div>
-                    <div id="lesson-qr-code"></div>
-                    <button id="close-lesson-qr-btn" class="button"> Close </button>
+                <div class="modal-content">
+                    <div class="qr-container" style="display: flex; flex-direction: column; gap: 16px;">
+                        <div style="display: flex; flex-direction: row; justify-content: space-between; align-items: center;">
+                            <label for="">Registra le presenze</label>
+                            <button id="close-lesson-qr-btn" class="button close-btn"> X </button>
+                        </div>
+                    </div>
+                        <div id="lesson-qr-timer">25s</div>
+                        <div id="lesson-qr-token">---</div>
+                        <div id="lesson-qr-code"></div>
                 </div>
             </div>
         </div>

@@ -109,21 +109,11 @@ function loadClasses(classes) {
 
         const viewBtn = document.createElement('button');
         viewBtn.className = 'button view-class-btn';
-        viewBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="10 8 16 12 10 16"></polyline>
-            </svg>`;
+        viewBtn.innerHTML = `<img src="imgs/svg/arrowRight.svg" alt="View" />`;
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'button delete-class-btn';
-        deleteBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6l-1 14H6L5 6"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
-            </svg>`;
+        deleteBtn.innerHTML = `<img src="imgs/svg/trash.svg" alt="View" />`;
 
         btnContainer.appendChild(deleteBtn);
         btnContainer.appendChild(viewBtn);
@@ -350,16 +340,25 @@ UI.classDetail.titleInput.addEventListener('keydown', (e) => {
 UI.classDetail.titleInput.addEventListener('blur', saveClassName);
 
 UI.classDetail.switchDetailBtn.onclick = () => {
-    if(UI.classDetail.studentsPanel.container.style.display !== 'none'){
-        hide(UI.classDetail.studentsPanel.container);
-        show(UI.classDetail.lessonsPanel.container);
+    const btn = UI.classDetail.switchDetailBtn;
+    const text = btn.querySelector('span');
+    const studentsContainer = UI.classDetail.studentsPanel.container;
+    const lessonsContainer = UI.classDetail.lessonsPanel.container;
+
+    if (studentsContainer.style.display !== 'none') {
+        hide(studentsContainer);
+        show(lessonsContainer);
+        btn.classList.add('active');
+        text.textContent = 'Lessons';
         loadLessons(currentClassId);
     } else {
-        show(UI.classDetail.studentsPanel.container);
-        hide(UI.classDetail.lessonsPanel.container);
+        show(studentsContainer);
+        hide(lessonsContainer);
+        btn.classList.remove('active');
+        text.textContent = 'Students';
         loadStudentsTable(currentClassId);
     }
-}
+};
 
 // class detail - students panel
 UI.classDetail.studentsPanel.addBtn.onclick = async () => {
