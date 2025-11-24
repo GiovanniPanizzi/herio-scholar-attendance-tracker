@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Caricamento Herio...</title>
+<title>Loading Herio...</title>
 <style>
     html, body {
         margin: 0;
@@ -16,18 +16,7 @@
 
     body.fade-out {
         opacity: 0;
-        /* Usa una funzione cubic-bezier per un effetto più fluido */
         transition: opacity 0.5s cubic-bezier(.5, 0, .5, 1);
-    }
-
-    h1 {
-        font-family: 'Poppins', sans-serif;
-        font-size: 3rem;
-        margin: 0 0 40px 0;
-        opacity: 0;
-        transform: translateY(-50px);
-        animation: h1Enter 1s forwards;
-        color: #333;
     }
 
     img {
@@ -37,20 +26,39 @@
         animation: imgEnter .5s forwards 1s; 
     }
 
-    /* Stile per lo spinner */
+    h1 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 3rem;
+        margin: 0;
+        opacity: 0;
+        transform: translateY(-50px);
+        animation: h1Enter 1s forwards 0s;
+        color: #333;
+    }
+
+    h2 {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin-top: 5px;
+        margin-bottom: 40px;
+        color: #007bff;
+        opacity: 0;
+        transform: translateY(-20px);
+        animation: h2Enter 1s forwards 0.5s;
+    }
+
     .spinner {
         margin-top: 30px;
-        border: 4px solid rgba(0, 123, 255, 0.2); /* Bordo chiaro (colore tema) */
-        border-top: 4px solid #007bff; /* Bordo colorato per il movimento */
+        border: 4px solid rgba(0, 123, 255, 0.2); 
+        border-top: 4px solid #007bff;
         border-radius: 50%;
         width: 30px;
         height: 30px;
         opacity: 0;
-        /* Animazione di entrata dopo il logo */
         animation: spin 1s linear infinite, spinnerEnter 1s forwards 1.2s; 
     }
 
-    /* Stile per il testo di stato */
     .status-text {
         font-family: 'Inter', sans-serif;
         color: #6c757d;
@@ -64,6 +72,10 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
+    @keyframes h2Enter {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
     @keyframes imgEnter {
         to { opacity: 1; transform: scale(1); }
     }
@@ -86,7 +98,8 @@
 <body>
     <img src="resources/app_icon.png" alt="Logo">
     <h1>Herio.</h1>
+    <h2>Scholar</h2>
     <div class="spinner"></div>
-    <p class="status-text">Avvio servizi in corso...</p> 
+    <p class="status-text">Starting services...</p>
 </body>
 </html>

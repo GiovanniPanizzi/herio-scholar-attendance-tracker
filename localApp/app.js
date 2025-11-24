@@ -102,7 +102,7 @@ function loadClasses(classes) {
 
         const studentCount = document.createElement('span');
         studentCount.className = 'class-card-student-count';
-        studentCount.textContent = `${cls.student_count ?? 0} studenti iscritti`;
+        studentCount.textContent = `${cls.student_count ?? 0} students`;
 
         const btnContainer = document.createElement('div');
         btnContainer.className = 'class-card-buttons';
@@ -172,26 +172,37 @@ async function loadLessons(classId) {
     list.innerHTML = '';
 
     lessons.forEach(lesson => {
+        const lessonDate = new Date(lesson.date);
+
+        const formattedDateTime = lessonDate.toLocaleTimeString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
         const li = document.createElement('li');
         li.className = "lesson-card";
         li.dataset.id = lesson.id;
 
         const lessonText = document.createElement('span');
-        lessonText.textContent = `Lezione del ${lesson.date.replace('T', ' ')}`;
+        lessonText.textContent = `Lesson on ${formattedDateTime}`;
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'button delete-lesson-btn';
         deleteBtn.textContent = '×';
         deleteBtn.onclick = async (e) => {
             e.stopPropagation();
-            const confirmed = await askConfirm(`Vuoi davvero eliminare la lezione del ${lesson.date.replace('T', ' ')}?`);
+            
+            const confirmed = await askConfirm(`Are you sure you want to delete the lesson on ${formattedDateTime}?`);
             if (!confirmed) return;
 
             const success = await deleteLesson(lesson.id);
             if (success) {
                 loadLessons(classId);
             } else {
-                launchAlert('Errore eliminando la lezione.');
+                launchAlert('Error deleting the lesson.');
             }
         };
 
@@ -204,7 +215,7 @@ async function loadLessons(classId) {
 async function loadAttendanceTable(classId, lessonId) {
     try {
         const res = await fetch(`http://localhost:3000/lessons/${lessonId}/attendance`);
-        if (!res.ok) throw new Error("Errore fetch attendance");
+        if (!res.ok) throw new Error("Error fetch attendance");
 
         const students = await res.json();
         const tbody = UI.lessonDetail.attendanceTable.querySelector('tbody');
@@ -232,7 +243,7 @@ async function loadAttendanceTable(classId, lessonId) {
         });
     } catch (err) {
         console.error(err);
-        launchAlert("Errore caricando la tabella presenze");
+        launchAlert("Error loading attendance table");
     }
 }
 
@@ -268,7 +279,7 @@ UI.classes.addModal.closeBtn.onclick = () => {
 UI.classes.addModal.createBtn.onclick = () => {
     const className = UI.classes.addModal.input.value.trim();
     if (className === '') {
-        launchAlert('Il nome della classe non può essere vuoto.');
+        launchAlert('Class name cannot be empty.');
         return;
     }
     createClass(className);
@@ -285,7 +296,7 @@ UI.classes.list.addEventListener('click', async (e) => {
     const deleteBtn = e.target.closest('.delete-class-btn');
     if (deleteBtn) {
         const className = card.querySelector('.class-card-name').textContent;
-        const confirmed = await askConfirm(`Vuoi davvero eliminare la classe "${className}"?`);
+        const confirmed = await askConfirm(`Are you sure you want to delete class "${className}"?`);
         if (!confirmed) return;
         deleteClass(classId);
         return;
@@ -382,7 +393,7 @@ UI.classDetail.studentsPanel.addModal.createBtn.onclick = async () => {
     const lastName = UI.classDetail.studentsPanel.addModal.lastNameInput.value.trim();
 
     if (id === '' || firstName === '' || lastName === '') {
-        launchAlert('Tutti i campi devono essere compilati correttamente.');
+        launchAlert('All fields must be filled correctly.');
         createStudentLocked = false;
         return;
     }
@@ -391,7 +402,7 @@ UI.classDetail.studentsPanel.addModal.createBtn.onclick = async () => {
 
     const created = await createStudent(classId, id, firstName, lastName);
     if (!created) {
-        launchAlert("Errore creando lo studente.");
+        launchAlert("Errore loading the student.");
         createStudentLocked = false;
         return;
     }
@@ -410,7 +421,7 @@ UI.classDetail.studentsPanel.table.addEventListener('click', async (e) => {
     const studentId = btn.dataset.studentId;
     const classId = parseInt(UI.classDetail.title.dataset.classId);
 
-    const confirmed = await askConfirm("Vuoi davvero rimuovere questo studente?");
+    const confirmed = await askConfirm("Are you sure you want to remove this student?");
     if (!confirmed) {
         btn.disabled = false;
         return;
@@ -418,7 +429,7 @@ UI.classDetail.studentsPanel.table.addEventListener('click', async (e) => {
 
     const ok = await deleteStudent(classId, studentId);
     if (!ok) {
-        launchAlert("Errore eliminando lo studente.");
+        launchAlert("Errore deleting the student.");
         btn.disabled = false;
         return;
     }
@@ -455,7 +466,7 @@ UI.classDetail.studentsPanel.qrBtn.onclick = async () => {
                 <td>${s.student_id || ""}</td>
                 <td>${s.first_name}</td>
                 <td>${s.last_name}</td>
-                <td><button class="delete-btn" data-id="${s.id}">Elimina</button></td>
+                <td><button class="delete-btn button" data-id="${s.id}"> <img src="imgs/svg/trash.svg" style="color: white;"> </button></td>
             `;
             tbody.appendChild(row);
         });
@@ -476,6 +487,7 @@ UI.classDetail.studentsPanel.qrBtn.onclick = async () => {
     UI.classDetail.studentsPanel.addToClassBtn.onclick = async () => {
         await fetch(`/classes/${classId}/accept-pending-students`, { method: 'POST' });
         updatePendingStudents();
+        loadStudentsTable(currentClassId);
     };
 };
 
@@ -498,13 +510,13 @@ UI.classDetail.lessonsPanel.addModal.createBtn.onclick = async () => {
     const dateTime = UI.classDetail.lessonsPanel.addModal.dateInput.value;
 
     if (!dateTime) {
-        launchAlert("Inserisci una data valida.");
+        launchAlert("Please enter a valid date.");
         return;
     }
 
     const lesson = await createLesson(classId, dateTime);
     if (!lesson) {
-        launchAlert("Errore creando la lezione.");
+        launchAlert("Error creating lesson.");
         return;
     }
 
@@ -569,11 +581,11 @@ UI.lessonDetail.qrBtn.onclick = async () => {
         });
 
         let countdown = 20;
-        UI.lessonDetail.qrModal.timer.textContent = `Tempo rimanente: ${countdown}s`;
+        UI.lessonDetail.qrModal.timer.textContent = `Time remeaning: ${countdown}s`;
 
         lessonQrInterval = setInterval(async () => {
             countdown--;
-            UI.lessonDetail.qrModal.timer.textContent = `Tempo rimanente: ${countdown}s`;
+            UI.lessonDetail.qrModal.timer.textContent = `Time remeaning: ${countdown}s`;
             if (countdown <= 0) {
                 clearInterval(lessonQrInterval);
                 await generateQR();
@@ -690,14 +702,11 @@ async function deleteStudent(classId, studentId) {
             method: 'DELETE'
         });
         if (!res.ok) throw new Error();
-        if (currentLessonId) {
-            await synchronizeAttendance(currentLessonId);
-        }
         await loadStudentsTable(classId);
         return true;
     } catch (err) {
         console.error(err);
-        launchAlert("Errore eliminando lo studente.");
+        launchAlert("Error deleating student.");
         return false;
     }
 }

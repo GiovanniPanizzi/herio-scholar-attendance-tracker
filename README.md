@@ -25,49 +25,59 @@ The application uses a relational schema designed for speed and data integrity, 
 
 ```mermaid
 erDiagram
-    CLASSES {
-        int id PK
-        string name
+    classes {
+        INTEGER id PK
+        TEXT name
     }
 
-    STUDENTS {
-        string student_id PK
-        int class_id PK, FK
-        string first_name
-        string last_name
+    students {
+        TEXT student_id PK
+        TEXT first_name
+        TEXT last_name
+        INTEGER class_id PK, FK
     }
 
-    LESSONS {
-        int id PK
-        int class_id FK
-        string date
+    lessons {
+        INTEGER id PK
+        INTEGER class_id FK
+        TEXT date
     }
 
-    ATTENDANCE {
-        int lesson_id PK, FK
-        string student_id PK, FK
-        int class_id PK, FK
-        int is_present
+    attendance {
+        INTEGER lesson_id PK, FK
+        TEXT student_id PK, FK
+        INTEGER class_id PK, FK
+        INTEGER is_present
     }
 
-    TOKENS {
-        string token PK
-        int lesson_id FK
-        string created_at
+    lesson_tokens {
+        TEXT token PK
+        INTEGER lesson_id FK
+        TEXT created_at
     }
 
-    IP_ADDRESSES {
-        int id PK
-        int lesson_id FK
-        string ip_address 
+    ip_addresses {
+        INTEGER id PK
+        INTEGER lesson_id FK
+        TEXT ip_address 
     }
 
-    CLASSES ||--o{ STUDENTS : contains
-    CLASSES ||--o{ LESSONS : holds
-    LESSONS ||--o{ ATTENDANCE : registers
-    STUDENTS ||--o{ ATTENDANCE : participates
-    LESSONS ||--o| TOKENS : has
-    LESSONS ||--o{ IP_ADDRESSES : registers
+    pending_students {
+        INTEGER id PK
+        TEXT student_id 
+        TEXT first_name
+        TEXT last_name
+        INTEGER class_id FK
+        TEXT created_at
+    }
+
+    classes ||--o{ students : "has many (ON DELETE CASCADE)"
+    classes ||--o{ lessons : "contains (ON DELETE CASCADE)"
+    lessons ||--o{ attendance : "records presence (ON DELETE CASCADE)"
+    students ||--o{ attendance : "records presence (ON DELETE CASCADE)"
+    lessons ||--o| lesson_tokens : "has one token (ON DELETE CASCADE)"
+    lessons ||--o{ ip_addresses : "records IP (ON DELETE CASCADE)"
+    classes ||--o{ pending_students : "has pending (ON DELETE CASCADE)"
 ```
 
 ## Build instructions
