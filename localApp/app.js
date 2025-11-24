@@ -815,13 +815,6 @@ UI.classes.addModal.input.addEventListener('keydown', e => {
     }
 });
 
-UI.classDetail.titleInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        UI.classDetail.changeNameBtn.click();
-    }
-});
-
 {
     const addModal = UI.classDetail.studentsPanel.addModal;
 
