@@ -51,7 +51,6 @@ db.serialize(() => {
     // Enable foreign key constraints
     db.run("PRAGMA foreign_keys = ON");
 
-    // 1. CLASSES Table
     db.run(`
         CREATE TABLE IF NOT EXISTS classes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,7 +58,6 @@ db.serialize(() => {
         )
     `);
 
-    // 2. STUDENTS Table
     db.run(`
         CREATE TABLE IF NOT EXISTS students (
             student_id TEXT NOT NULL,
@@ -71,7 +69,6 @@ db.serialize(() => {
         )
     `);
 
-    // 3. LESSONS Table
     db.run(`
         CREATE TABLE IF NOT EXISTS lessons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -81,7 +78,6 @@ db.serialize(() => {
         )
     `);
 
-    // 4. ATTENDANCE Table
     db.run(`
         CREATE TABLE IF NOT EXISTS attendance (
             lesson_id INTEGER NOT NULL,
@@ -94,7 +90,6 @@ db.serialize(() => {
         )
     `);
 
-    // 5. LESSON TOKENS
     db.run(`
         CREATE TABLE IF NOT EXISTS lesson_tokens (
             token TEXT PRIMARY KEY,
@@ -104,17 +99,6 @@ db.serialize(() => {
         )
     `);
 
-    // 6. CLASS TOKENS
-    db.run(`
-        CREATE TABLE IF NOT EXISTS class_tokens (
-            token TEXT PRIMARY KEY,
-            class_id INTEGER NOT NULL UNIQUE,
-            created_at TEXT NOT NULL,
-            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
-        )
-    `);
-
-    // 7. IP ADDRESSES
     db.run(`
         CREATE TABLE IF NOT EXISTS ip_addresses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125,16 +109,16 @@ db.serialize(() => {
         )
     `);
 
-    // 8. PENDING STUDENTS
     db.run(`
         CREATE TABLE IF NOT EXISTS pending_students (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id TEXT,
+            student_id TEXT NOT NULL,
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
             class_id INTEGER NOT NULL,
             created_at TEXT NOT NULL,
-            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            UNIQUE(student_id, class_id)
         )
     `);
 });
@@ -172,6 +156,11 @@ function getLocalIP() {
 /* ----------------------------------- */
 /* --- GET API ---            */
 /* ----------------------------------- */
+
+app.get('/server-ip', (req, res) => {
+    const ip = getLocalIP();
+    res.json({ server_ip: ip });
+});
 
 // Get all classes
 app.get('/classes', checkLocal, (req, res) => {
@@ -312,76 +301,136 @@ app.post('/lessons/:lessonId/token', checkLocal, (req, res) => {
 });
 
 //add pending student
-app.post('/classes/:classId/pending-students', checkLocal, (req, res) => {
+app.post('/classes/:classId/pending-students', (req, res) => {
     const { first_name, last_name, student_id } = req.body;
     const classId = req.params.classId;
 
-    if (!first_name || !last_name) return res.status(400).json({ error: 'First and last name required' });
+    console.log("Incoming request to add pending student");
+    console.log("Request body:", req.body);
+    console.log("Class ID from URL:", classId);
+
+    if (!first_name || !last_name || !student_id) {
+        console.warn("Missing required fields");
+        return res.status(400).json({ error: 'First name, last name and student ID are required' });
+    }
+
+    const trimmedStudentId = student_id.trim();
+    console.log("Trimmed student ID:", trimmedStudentId);
 
     const createdAt = new Date().toISOString();
 
     db.run(`
         INSERT INTO pending_students (student_id, first_name, last_name, class_id, created_at)
         VALUES (?, ?, ?, ?, ?)
-    `, [student_id || null, first_name.trim(), last_name.trim(), classId, createdAt], function(err){
-        if(err) return res.status(500).json({ error: err.message });
-        res.json({ id: this.lastID, student_id, first_name, last_name, class_id: classId });
-    });
-});
+    `, [trimmedStudentId, first_name.trim(), last_name.trim(), classId, createdAt], function(err) {
+        if (err) {
+            console.error("DB error:", err.message);
 
-//generate class token
-app.post('/classes/:classId/token', checkLocal, (req, res) => {
-    const classId = req.params.classId;
-    const token = crypto.randomBytes(3).toString('hex').toUpperCase();
-    const createdAt = new Date().toISOString();
+            if (err.message.includes('UNIQUE constraint failed')) {
+                console.warn("Attempted to insert duplicate student ID for this class");
+                return res.status(409).json({ 
+                    error: 'This student ID is already pending for this class.' 
+                });
+            }
 
-    db.run(`
-        INSERT INTO class_tokens (token, class_id, created_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(class_id) DO UPDATE SET token = excluded.token, created_at = excluded.created_at
-    `, [token, classId, createdAt], function(err){
-        if(err) return res.status(500).json({ error: err.message });
-        const ip = getLocalIP();
-        res.json({ token, class_id: classId, server_ip: ip });
+            return res.status(500).json({ error: err.message });
+        }
+
+        console.log("Inserted pending student with ID:", this.lastID);
+
+        res.json({ 
+            id: this.lastID, 
+            student_id: trimmedStudentId, 
+            first_name: first_name.trim(), 
+            last_name: last_name.trim(), 
+            class_id: classId 
+        });
     });
 });
 
 //add all pending users to class
 app.post('/classes/:classId/accept-pending-students', checkLocal, (req, res) => {
     const classId = req.params.classId;
+    console.log(`[DEBUG] Accepting pending students for class ${classId}`);
 
     db.all(`SELECT * FROM pending_students WHERE class_id = ?`, [classId], (err, pending) => {
-        if(err) return res.status(500).json({ error: err.message });
-        if(pending.length === 0) return res.json({ success: true, message: 'No pending students to add' });
+        if (err) {
+            console.error('[ERROR] Fetching pending students:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
 
-        const insertStudentStmt = db.prepare(`INSERT INTO students (student_id, first_name, last_name, class_id) VALUES (?, ?, ?, ?)`);
-        const insertAttendanceStmt = db.prepare(`INSERT INTO attendance (lesson_id, student_id, class_id, is_present) VALUES (?, ?, ?, 0)`);
+        if (pending.length === 0) {
+            console.log('[DEBUG] No pending students to add');
+            return res.json({ success: true, message: 'No pending students to add' });
+        }
 
-        // Fetch all lessons for the class
+        console.log(`[DEBUG] Found ${pending.length} pending students`);
+
+        const insertStudentStmt = db.prepare(`
+            INSERT OR IGNORE INTO students (student_id, first_name, last_name, class_id) 
+            VALUES (?, ?, ?, ?)
+        `);
+
+        const insertAttendanceStmt = db.prepare(`
+            INSERT OR IGNORE INTO attendance (lesson_id, student_id, class_id, is_present) 
+            VALUES (?, ?, ?, 0)
+        `);
+
         db.all(`SELECT id FROM lessons WHERE class_id = ?`, [classId], (err, lessons) => {
-            if(err) return res.status(500).json({ error: err.message });
+            if (err) {
+                console.error('[ERROR] Fetching lessons:', err.message);
+                return res.status(500).json({ error: err.message });
+            }
+
+            console.log(`[DEBUG] Found ${lessons.length} lessons for class ${classId}`);
 
             pending.forEach(p => {
-                const studentId = p.student_id || crypto.randomBytes(3).toString('hex').toUpperCase(); // generate ID if null
-                insertStudentStmt.run(studentId, p.first_name, p.last_name, classId);
+                const studentId = p.student_id || crypto.randomBytes(3).toString('hex').toUpperCase();
 
-                // Fill attendance for each lesson
+                console.log(`[DEBUG] Adding student: ${studentId} - ${p.first_name} ${p.last_name}`);
+                insertStudentStmt.run(studentId, p.first_name, p.last_name, classId, function(err) {
+                    if (err) {
+                        console.error(`[ERROR] Inserting student ${studentId}:`, err.message);
+                    } else {
+                        if (this.changes === 0) {
+                            console.log(`[DEBUG] Student ${studentId} already exists, skipped`);
+                        } else {
+                            console.log(`[DEBUG] Student ${studentId} inserted successfully`);
+                        }
+                    }
+                });
+
                 lessons.forEach(l => {
-                    insertAttendanceStmt.run(l.id, studentId, classId, 0);
+                    insertAttendanceStmt.run(l.id, studentId, classId, function(err) {
+                        if (err) {
+                            console.error(`[ERROR] Inserting attendance for ${studentId} in lesson ${l.id}:`, err.message);
+                        } else {
+                            if (this.changes === 0) {
+                                console.log(`[DEBUG] Attendance record already exists for ${studentId} in lesson ${l.id}, skipped`);
+                            } else {
+                                console.log(`[DEBUG] Attendance record added for ${studentId} in lesson ${l.id}`);
+                            }
+                        }
+                    });
                 });
             });
 
             insertStudentStmt.finalize();
             insertAttendanceStmt.finalize();
 
-            // Delete all pending students for the class
-            db.run(`DELETE FROM pending_students WHERE class_id = ?`, [classId], function(err){
-                if(err) return res.status(500).json({ error: err.message });
+            db.run(`DELETE FROM pending_students WHERE class_id = ?`, [classId], function(err) {
+                if (err) {
+                    console.error('[ERROR] Deleting pending students:', err.message);
+                    return res.status(500).json({ error: err.message });
+                }
+                console.log(`[DEBUG] Cleared ${this.changes} pending students for class ${classId}`);
+
                 res.json({ success: true, added: pending.length });
             });
         });
     });
 });
+
 
 /* ----------------------------------- */
 /* --- POST API ---           */

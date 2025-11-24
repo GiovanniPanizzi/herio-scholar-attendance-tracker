@@ -407,7 +407,7 @@ UI.classDetail.studentsPanel.table.addEventListener('click', async (e) => {
     const btn = e.target;
     btn.disabled = true;
 
-    const studentId = parseInt(btn.dataset.studentId);
+    const studentId = btn.dataset.studentId;
     const classId = parseInt(UI.classDetail.title.dataset.classId);
 
     const confirmed = await askConfirm("Vuoi davvero rimuovere questo studente?");
@@ -431,9 +431,10 @@ let pendingInterval = null;
 UI.classDetail.studentsPanel.qrBtn.onclick = async () => {
     const classId = parseInt(UI.classDetail.title.dataset.classId);
 
-    const data = await fetch(`/classes/${classId}/token`, { method: 'POST' }).then(r => r.json());
+    const data = await fetch('/server-ip').then(r => r.json());
     const ip = data.server_ip;
-    const qrData = `http://${ip}:3000/registration.html?class=${classId}&token=${data.token}`;
+
+    const qrData = `http://${ip}:3000/registration.html?class=${classId}`;
 
     UI.classDetail.studentsPanel.qrCode.innerHTML = '';
     new QRCode(UI.classDetail.studentsPanel.qrCode, {
@@ -473,7 +474,6 @@ UI.classDetail.studentsPanel.qrBtn.onclick = async () => {
     show(UI.classDetail.studentsPanel.qrModal, "flex");
 
     UI.classDetail.studentsPanel.addToClassBtn.onclick = async () => {
-        const classId = parseInt(UI.classDetail.title.dataset.classId);
         await fetch(`/classes/${classId}/accept-pending-students`, { method: 'POST' });
         updatePendingStudents();
     };

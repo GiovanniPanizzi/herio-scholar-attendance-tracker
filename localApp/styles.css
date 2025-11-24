@@ -475,6 +475,38 @@ input {
     100% { transform: scale(1.2); }
 }
 
+/* LESSONS */
+#lessons-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 20px;
+    gap: var(--spacing-lg);
+    box-sizing: border-box;
+}
+
+#lessons-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+#lessons-list li {
+    background-color: var(--color-white);
+    padding: 12px 16px;
+    border-radius: var(--border-radius);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#lessons-list li:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
 /* HIDDEN ELEMENTS */
 .header,
 .container,
@@ -484,3 +516,4 @@ input {
 #chage-class-name-input {
     display: none;
 }
+
