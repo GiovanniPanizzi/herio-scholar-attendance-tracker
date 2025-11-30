@@ -1,6 +1,6 @@
 {
-  "name": "Herio",
-  "version": "1.0.0",
+  "name": "Herio Scholar",
+  "version": "1.1.0",
   "description": "Desktop application for attendance management over LAN",
   "main": "main.js",
   "author": "Giovanni Panizzi",

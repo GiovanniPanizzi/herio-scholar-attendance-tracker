@@ -554,6 +554,16 @@ input {
     margin-top: var(--spacing-md);
 }
 
+.no-bg {
+    background-color: transparent;
+}
+
+.no-bg:hover {
+    background-color: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
 /* HIDDEN ELEMENTS */
 .header,
 .container,

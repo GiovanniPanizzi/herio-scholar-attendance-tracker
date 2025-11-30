@@ -1,10 +1,10 @@
-# Herio: LAN Attendance Tracker (Electron Desktop App)
+# Herio Scholar: LAN Attendance Tracker (Electron Desktop App)
 
 ****
 
 ### 🌟 Project Description
 
-**Herio** is a robust, cross-platform **desktop application** designed for efficient **attendance tracking** in educational or organizational settings. Built using **Electron** and **Node.js**, it operates entirely on a **Local Area Network (LAN)**, providing a self-hosted, centralized system without requiring an external internet connection or cloud services. Attendance data for multiple classes is stored securely in a local **SQLite database**.
+**Herio Scholar** is a robust, cross-platform **desktop application** designed for efficient **attendance tracking** in educational or organizational settings. Built using **Electron** and **Node.js**, it operates entirely on a **Local Area Network (LAN)**, providing a self-hosted, centralized system without requiring an external internet connection or cloud services. Attendance data for multiple classes is stored securely in a local **SQLite database**.
 
 This architecture makes Herio ideal for environments requiring quick, reliable, and private data management.
 
@@ -82,13 +82,13 @@ erDiagram
 
 ## Build instructions
 
-To create a local build of **Herio**:
+To create a local build of **Herio Scholar**:
 
 1. **Clone the repository**:
 
 ```bash
 git clone https://github.com/GiovanniPanizzi/herio-attendance-tracker.git
-cd herio-attendance-tracker
+cd herio-scholar-attendance-tracker
 ```
 
 2. **Install dependencies**:

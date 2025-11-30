@@ -81,8 +81,6 @@ const UI = {
     }
 };
 
-let lessonQrInterval = null;
-
 function show(element, displayStyle = 'flex') { if (element) element.style.display = displayStyle; }
 function hide(element) { if (element) element.style.display = 'none'; }
 
@@ -466,7 +464,7 @@ UI.classDetail.studentsPanel.qrBtn.onclick = async () => {
                 <td>${s.student_id || ""}</td>
                 <td>${s.first_name}</td>
                 <td>${s.last_name}</td>
-                <td><button class="delete-btn button" data-id="${s.id}"> <img src="imgs/svg/trash.svg" style="color: white;"> </button></td>
+                <td><button class="delete-btn button no-bg" data-id="${s.id}"> <img src="imgs/svg/trash.svg" style="color: white;"> </button></td>
             `;
             tbody.appendChild(row);
         });
@@ -558,39 +556,52 @@ UI.lessonDetail.attendanceTable.addEventListener('change', async (e) => {
 });
 
 // lesson detail - qr modal
+let lessonQrInterval; 
+
 UI.lessonDetail.qrBtn.onclick = async () => {
     const classId = currentClassId;
     const lessonId = currentLessonId;
 
     async function generateQR() {
-        const data = await fetch(`/lessons/${lessonId}/token`, { method: 'POST' }).then(r => r.json());
-        const ip = data.server_ip;
-        const token = data.token;
-        const qrUrl = `http://${ip}:3000/?class=${classId}&lesson=${lessonId}&token=${token}`;;
+        if (lessonQrInterval) {
+            clearInterval(lessonQrInterval);
+            lessonQrInterval = null;
+        }
 
-        UI.lessonDetail.qrModal.token.textContent = token;
-        UI.lessonDetail.qrModal.code.innerHTML = '';
+        try {
+            const data = await fetch(`/lessons/${lessonId}/token`, { method: 'POST' }).then(r => r.json());
+            const ip = data.server_ip;
+            const token = data.token;
+            const qrUrl = `http://${ip}:3000/?class=${classId}&lesson=${lessonId}&token=${token}`;
 
-        new QRCode(UI.lessonDetail.qrModal.code, {
-            text: qrUrl,
-            width: 200,
-            height: 200,
-            colorDark: "#000000",
-            colorLight: "#ffffff",
-            correctLevel: QRCode.CorrectLevel.H
-        });
+            UI.lessonDetail.qrModal.token.textContent = token;
+            UI.lessonDetail.qrModal.code.innerHTML = '';
 
-        let countdown = 20;
-        UI.lessonDetail.qrModal.timer.textContent = `Time remeaning: ${countdown}s`;
+            new QRCode(UI.lessonDetail.qrModal.code, {
+                text: qrUrl,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+            let countdown = 20;
+            UI.lessonDetail.qrModal.timer.textContent = `Time remaining: ${countdown}s`;
 
-        lessonQrInterval = setInterval(async () => {
-            countdown--;
-            UI.lessonDetail.qrModal.timer.textContent = `Time remeaning: ${countdown}s`;
-            if (countdown <= 0) {
-                clearInterval(lessonQrInterval);
-                await generateQR();
-            }
-        }, 1000);
+            lessonQrInterval = setInterval(async () => {
+                countdown--;
+                UI.lessonDetail.qrModal.timer.textContent = `Time remaining: ${countdown}s`;
+
+                if (countdown <= 0) {
+                    clearInterval(lessonQrInterval);
+                    await generateQR();
+                }
+            }, 1000);
+
+        } catch (error) {
+            console.error("Errore generazione QR:", error);
+            UI.lessonDetail.qrModal.timer.textContent = "Errore di connessione...";
+        }
     }
 
     await generateQR();
@@ -599,7 +610,10 @@ UI.lessonDetail.qrBtn.onclick = async () => {
 
 UI.lessonDetail.qrModal.closeBtn.onclick = async () => {
     hide(UI.lessonDetail.qrModal.overlay);
-    clearInterval(lessonQrInterval);
+    if (lessonQrInterval) {
+        clearInterval(lessonQrInterval);
+        lessonQrInterval = null;
+    }
     loadAttendanceTable(currentClassId, currentLessonId);
     await fetch(`/lessons/${currentLessonId}/token`, { method: 'DELETE' });
 };
