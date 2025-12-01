@@ -1,23 +1,43 @@
-# Herio Scholar: LAN Attendance Tracker (Electron Desktop App)
+# 🎓 Herio Scholar: High-Security LAN Attendance Tracker (Electron Desktop App)
 
-****
+## 🌟 Project Vision
 
-### 🌟 Project Description
+**Herio Scholar** is a robust, standalone **desktop application** designed to revolutionize attendance management in educational and organizational settings. Leveraging the power of **Electron** and the reliability of **Node.js/Express**, the application establishes a centralized **Local Area Network (LAN) server** on the instructor's PC.
 
-**Herio Scholar** is a robust, cross-platform **desktop application** designed for efficient **attendance tracking** in educational or organizational settings. Built using **Electron** and **Node.js**, it operates entirely on a **Local Area Network (LAN)**, providing a self-hosted, centralized system without requiring an external internet connection or cloud services. Attendance data for multiple classes is stored securely in a local **SQLite database**.
+This architecture guarantees: **maximum speed**, **total data privacy** (stored locally with SQLite), and an **extremely reliable attendance verification system** based on QR Codes and strict local network constraints.
 
-This architecture makes Herio ideal for environments requiring quick, reliable, and private data management.
+***
 
----
+## 🚀 Operational Flow and Core Features
 
-### 🚀 Key Features
+Herio Scholar is a **self-hosted solution** that manages the entire lifecycle of the class session, from class creation to secure, automated student attendance registration.
 
-* **Offline LAN Operation:** The application is self-contained and runs on a local server (Node.js/Express) accessible only via the LAN, guaranteeing speed and data privacy.
-* **Electron Desktop Client:** Provides a fast, native-like user experience on Windows, macOS, and Linux for managing classes, students, and sessions.
-* **QR Code-Based Attendance:** Generates a unique, time-limited QR code for each lesson. Students simply scan the code using any mobile device to quickly and accurately register their presence.
-* **Multi-Class Management:** Manage multiple independent classes and their student rosters efficiently within the application.
-* **SQLite Database:** All class data, student information, and attendance records are stored locally in a single, portable SQLite database, simplifying backup and migration.
-* **IP Address Logging:** For enhanced security and audit trails, the application records the IP address from which the attendance was registered.
+### 1. 🖥️ Centralized Management & Architecture
+The desktop application (built with **Electron**) provides a fast, native-like user interface, allowing the instructor to:
+* **Manage Classes and Lessons:** Create, modify, and archive classes, student rosters, and lesson records efficiently.
+* **SQLite Database:** All class data, student information, and attendance records are stored in a local, portable **SQLite database**, ensuring information remains private and easily transferable.
+* **Integrated LAN Server:** The application automatically starts an HTTP/API server (Node.js/Express) **only accessible** by devices connected to the same Local Area Network (LAN).
+
+### 2. 🔑 Student Self-Registration (QR Code Class-Joining)
+To eliminate manual data entry and ensure data accuracy, the app supports student self-enrollment:
+* Students scan a dedicated **registration QR Code** with their mobile device.
+* They can then self-submit their student ID and name into the roster, automatically becoming part of the official class list (pending approval).
+
+### 3. ✅ Secure Attendance Registration (QR Code Lesson Attendance)
+For each lesson, the instructor generates a QR Code that serves as the access key:
+
+* **Unique Token:** The QR Code embeds a unique, time-sensitive token tied specifically to that lesson.
+* **Student Self-Attendance:** Students scan the code using any mobile device. The application receives the attendance request and updates the register.
+
+### 4. 🛡️ Security and Multi-Factor Verification
+
+The core strength of the system lies in its ability to leverage the LAN environment for enhanced verification, making attendance robust against fraud:
+
+* **LAN Constraint:** The application **only functions** if the student's device is connected to the same Wi-Fi network as the instructor's PC (where the server resides). This verifies the student's **physical presence** in the study area.
+* **Unique IP Address Logging:** When a student registers attendance for a lesson, the application records the **private IP address** of their device.
+    * **Anti-Frode:** This mechanism ensures that **a single device** (based on the IP address) can register attendance **only once** for that lesson. This prevents a present student from registering multiple absent classmates from the same phone.
+
+***
 
 ### Database Schema Overview (SQLite)
 
