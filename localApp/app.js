@@ -133,6 +133,13 @@ function openClassDetail(classId, className){
     hide(UI.headers.classesHeader);
     show(UI.headers.classHeader);
 
+    show(UI.classDetail.studentsPanel.container);
+    hide(UI.classDetail.lessonsPanel.container);
+	
+    const switchBtn = UI.classDetail.switchDetailBtn;
+    switchBtn.classList.remove('active');
+    switchBtn.querySelector('span').textContent = 'Students';
+    UI.classDetail.lessonsPanel.list.innerHTML = '';
     loadStudentsTable(classId);
 }
 
